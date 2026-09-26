@@ -232,3 +232,32 @@ button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-vis
 .menu-name{font:inherit;padding:8px 12px;border:2px solid var(--ink);border-radius:10px;width:100%;max-width:280px;box-sizing:border-box}
 .diff-row{display:flex;gap:8px}.diff-btn{background:var(--paper)}.diff-btn.on{background:var(--yellow)}
 body.menu-open #hud{display:none}
+
+/* Titelbild */
+.menu-screen.ti{background:linear-gradient(#ffb56b 0%,#ffd9a0 45%,#f5f2e9 75%);overflow:hidden;transition:opacity .35s}
+.ti.leaving{opacity:0}
+.ti-sun{position:absolute;left:50%;top:26%;width:260px;height:260px;margin-left:-130px;border-radius:50%;background:radial-gradient(#fff6c8,#ffcf5b 60%,rgba(255,207,91,0) 72%);animation:ti-pulse 5s ease-in-out infinite}
+.ti-cloud{position:absolute;height:30px;width:120px;border-radius:30px;background:#fffdf7;opacity:.85;animation:ti-drift 60s linear infinite}
+.ti-cloud:before{content:"";position:absolute;left:20px;top:-16px;width:56px;height:36px;border-radius:50%;background:inherit}
+.ti-cloud.c1{top:12%;left:-150px}.ti-cloud.c2{top:24%;left:-150px;animation-duration:85s;animation-delay:-30s;transform:scale(.7)}.ti-cloud.c3{top:8%;left:-150px;animation-duration:110s;animation-delay:-70s}
+.ti-city{position:absolute;left:0;right:0;bottom:118px;display:flex;justify-content:center;align-items:flex-end;gap:6px}
+.ti-bld{background:#3b4a5a;border:2px solid var(--ink);border-bottom:0;border-radius:4px 4px 0 0;display:flex;flex-wrap:wrap;align-content:flex-start;gap:6px;padding:8px;box-sizing:border-box}
+.ti-bld i{width:9px;height:12px;background:#ffcf5b;opacity:.15;animation:ti-window 5s ease-in-out infinite}
+.ti-road{position:absolute;left:0;right:0;bottom:0;height:120px;background:#5b6b78;border-top:4px solid var(--ink)}
+.ti-road:after{content:"";position:absolute;left:0;right:0;top:56px;border-top:4px dashed #ffcf5b}
+.ti-crowd{position:absolute;left:0;right:0;bottom:36px;height:150px;pointer-events:none}
+.ti-fig{position:absolute;left:0;bottom:0;width:80px;animation:ti-walk 16s linear infinite}
+.ti-fig img{width:100%;animation:ti-bob .6s ease-in-out infinite;transform-origin:bottom}
+.ti-center{position:relative;text-align:center;margin-top:-140px}
+.ti-title{margin:0;font-size:clamp(46px,9vw,96px);color:var(--orange);text-shadow:4px 4px 0 var(--ink);animation:ti-float 3.2s ease-in-out infinite;letter-spacing:1px}
+.ti-sub{font-size:20px;font-weight:700;margin:6px 0 22px}
+.ti-play{font-size:26px;padding:14px 44px;animation:ti-beat 1.6s ease-in-out infinite}
+.ti-hint{color:var(--ink);opacity:.7;margin-top:14px}
+@keyframes ti-pulse{50%{transform:scale(1.08)}}
+@keyframes ti-drift{to{left:110%}}
+@keyframes ti-window{0%,100%{opacity:.12}50%{opacity:.95}}
+@keyframes ti-walk{from{left:-100px}to{left:100%}}
+@keyframes ti-bob{50%{transform:translateY(-6px) scaleY(1.02)}}
+@keyframes ti-float{50%{transform:translateY(-10px) rotate(-1deg)}}
+@keyframes ti-beat{50%{transform:scale(1.07)}}
+@media (prefers-reduced-motion:reduce){.ti *{animation:none!important}}

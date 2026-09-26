@@ -458,7 +458,7 @@
     }
     function applyAvatar() { Characters.setPlayer(Avatars.figure2D(State.s.avatar)); World.setAvatar(Avatars.presetName(State.s.avatar)); }
     applyAvatar();
-    if (!State.s.started && !State.hasSave()) Menu.showStart(startOpts());
+    Menu.showTitle(function () { Menu.showStart(startOpts()); });
     var openPause = function () { if (winOpen || Menu.isOpen() || document.querySelector('.modal-back')) return; Menu.showPause({ startOpts: startOpts }); };
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !winOpen && !Menu.isOpen() && !document.querySelector('.modal-back')) { openPause(); e.preventDefault(); } else if (e.key === 'Escape' && Menu.isOpen() && document.getElementById('menu-pause')) { Menu.close(); } });
     var hm = document.getElementById('hud-menu'); if (hm) hm.addEventListener('click', openPause);

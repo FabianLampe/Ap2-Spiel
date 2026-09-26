@@ -99,6 +99,32 @@
     document.body.appendChild(root);
   }
 
+  // ---- Titelbild ----
+  function showTitle(onPlay) {
+    close(); document.body.classList.add('menu-open');
+    var pv = renderPreviews(), sky = el('div', { class: 'ti-city' }), i;
+    for (i = 0; i < 14; i++) {
+      var h = 80 + ((i * 53) % 150), b = el('div', { class: 'ti-bld', style: 'height:' + h + 'px;width:' + (46 + (i * 17) % 40) + 'px' });
+      for (var w = 0; w < Math.floor(h / 26); w++) b.appendChild(el('i', { style: 'animation-delay:' + (((i * 7 + w * 3) % 11) * 0.45) + 's' }));
+      sky.appendChild(b);
+    }
+    var crowd = el('div', { class: 'ti-crowd' });
+    Avatars.list.forEach(function (a, k) {
+      crowd.appendChild(el('div', { class: 'ti-fig', style: 'animation-delay:' + (-k * 1.3) + 's' }, [pv[a.id] ? el('img', { src: pv[a.id], alt: '' }) : el('span')]));
+    });
+    var play = el('button', { class: 'btn ti-play', type: 'button', onclick: function () { root.classList.add('leaving'); setTimeout(onPlay, 350); } }, ['▶ Spielen']);
+    root = el('div', { id: 'menu-title', class: 'menu-screen ti', role: 'dialog', 'aria-label': 'Titelbild' }, [
+      el('div', { class: 'ti-sun' }), el('div', { class: 'ti-cloud c1' }), el('div', { class: 'ti-cloud c2' }), el('div', { class: 'ti-cloud c3' }),
+      sky, el('div', { class: 'ti-road' }), crowd,
+      el('div', { class: 'ti-center' }, [
+        el('h1', { class: 'ti-title' }, ['Rack & Ruhm']),
+        el('p', { class: 'ti-sub' }, ['Vom Freelancer zum Fachinformatiker']),
+        play, el('p', { class: 'ti-hint' }, ['Für die AP2 · offline spielbar'])
+      ])
+    ]);
+    document.body.appendChild(root); play.focus();
+  }
+
   // ---- Pausenmenü ----
   function showPause(opts) {
     close(); document.body.classList.add('menu-open');
@@ -126,5 +152,5 @@
     document.body.appendChild(root);
   }
 
-  window.Menu = { showStart: showStart, showPause: showPause, close: close, isOpen: function () { return !!root; }, download: download };
+  window.Menu = { showTitle: showTitle, showStart: showStart, showPause: showPause, close: close, isOpen: function () { return !!root; }, download: download };
 })();
