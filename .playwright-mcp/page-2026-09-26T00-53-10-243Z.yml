@@ -1,0 +1,14 @@
+- generic [active]:
+  - generic:
+    - generic [ref=f15e3]:
+      - button "Karte (M)" [ref=f15e5] [cursor=pointer]
+      - button "📖 Handbuch (H)" [ref=f15e6] [cursor=pointer]
+    - generic: "WASD gehen · Shift rennen · Maus ziehen oder Pfeile: Kamera · Mausrad: Zoom · E benutzen · M Karte · H Handbuch"
+  - banner [ref=f15e8]:
+    - generic [ref=f15e9]: Rack & Ruhm
+    - navigation "Hauptmenü"
+    - generic [ref=f15e10]:
+      - generic [ref=f15e11]: Tag 1 · 08:00
+      - generic [ref=f15e12]: 500 €
+      - generic [ref=f15e13]: Ruf 0
+      - button "Neustart" [ref=f15e14] [cursor=pointer]

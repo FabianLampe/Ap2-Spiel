@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rack & Ruhm</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/game.css">
+<link rel="stylesheet" href="css/anim.css">
+</head>
+<body>
+<div id="world" aria-hidden="true"></div>
+<div id="hud" aria-live="polite">
+  <div class="hud-top"><span id="hud-place"></span><button class="btn small ghost" id="hud-map" title="Karte (M)">Karte (M)</button><button class="btn small ghost" id="hud-book" title="Handbuch (H)">📖 Handbuch (H)</button><button class="btn small ghost" id="hud-notes" title="Notizbuch (N)">✎ Notizbuch (N)</button></div>
+  <div class="hud-hint">WASD gehen · Shift rennen · Maus ziehen oder Pfeile: Kamera · Mausrad: Zoom · E benutzen · M Karte · H Handbuch · N Notizbuch</div>
+  <div id="hud-prompt" role="button" tabindex="0"></div>
+</div>
+<div id="toasts" aria-live="polite"></div>
+<div id="fade"></div>
+<header class="topbar">
+  <div class="brand">Rack &amp; Ruhm</div>
+  <nav id="nav" class="nav" aria-label="Hauptmenü"></nav>
+  <div class="stats">
+    <span class="stat" id="stat-day">Tag 1 · 08:00</span>
+    <span class="stat" id="stat-money">0 €</span>
+    <span class="stat" id="stat-rep">Ruf 0</span>
+    <button class="btn small ghost" id="btn-reset" title="Spielstand löschen">Neustart</button>
+  </div>
+</header>
+<main id="app"><p>Lade …</p></main>
+
+<script src="vendor/three.min.js"></script>
+<script src="js/world/textures.js"></script>
+<script src="js/world/props.js"></script>
+<script src="js/world/humans.js"></script>
+<script src="js/world/engine.js"></script>
+<script src="js/world/locations/wohnung.js"></script>
+<script src="js/world/locations/cafe.js"></script>
+<script src="js/world/locations/buero.js"></script>
+<script src="js/world/locations/bank.js"></script>
+<script src="js/world/locations/finanzamt.js"></script>
+<script src="js/world/locations/autohaus.js"></script>
+<script src="js/world/locations/makler.js"></script>
+<script src="js/world/locations/weiterbildung.js"></script>
+<script src="vendor/sql-wasm.js"></script>
+<script src="vendor/sql-wasm-binary.js"></script>
+<script src="data/sql-tasks.js"></script>
+<script src="js/state.js"></script>
+<script src="js/economy.js"></script>
+<script src="js/mysql-compat.js"></script>
+<script src="js/sql-engine.js"></script>
+<script src="js/characters.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/fx.js"></script>
+<script src="data/handbuch/sql.js"></script>
+<script src="js/reference.js"></script>
+<script src="js/quests.js"></script>
+<script src="js/tasks.js"></script>
+<script src="js/types/sql.js"></script>
+<script src="js/types/auswahl.js"></script>
+<script src="js/map.js"></script>
+<script src="js/shop.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

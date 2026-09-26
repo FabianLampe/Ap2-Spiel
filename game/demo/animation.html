@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rack & Ruhm – Animations-Demo</title>
+<link rel="stylesheet" href="../css/game.css">
+<link rel="stylesheet" href="../css/anim.css">
+<style>.fig-card{text-align:center}.fig-card .fig{margin:0 auto 8px}.stage{display:flex;gap:16px;flex-wrap:wrap}.row2{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px}</style>
+</head>
+<body>
+<header class="topbar"><div class="brand">Animations-Demo</div>
+  <div class="stats"><span class="stat" id="stat-money">150 €</span><span class="stat" id="stat-rep">Ruf 12</span></div></header>
+<main>
+  <h1>Figuren</h1>
+  <p class="sub">Alle Figuren im Leerlauf (atmen, blinzeln, nicken). Mit den Knöpfen kannst du Stimmungen auslösen.</p>
+  <div class="stage" id="stage"></div>
+  <h1 style="margin-top:28px">Effekte</h1>
+  <div class="row">
+    <button class="btn" id="b-coins">Münzen</button><button class="btn" id="b-stars">Ruf-Sterne</button>
+    <button class="btn" id="b-conf">Konfetti</button><button class="btn ghost" id="b-shake">Wackeln</button>
+  </div>
+  <h1 style="margin-top:28px">Szene</h1>
+  <div class="card" style="padding:0;overflow:hidden;max-width:760px" id="scene"></div>
+  <div class="row" style="margin-top:10px"><label>Uhrzeit: <input type="range" id="clock" min="480" max="1020" value="580"> <span id="clock-l"></span></label>
+    <button class="btn small" data-scene="happy">Spieler froh</button><button class="btn small" data-scene="sad">Spieler traurig</button><button class="btn small" data-scene="thinking">Spieler denkt</button><button class="btn small ghost" data-scene="">Normal</button></div>
+</main>
+<script src="../js/characters.js"></script>
+<script src="../js/scene.js"></script>
+<script src="../js/fx.js"></script>
+<script>
+  var stage = document.getElementById('stage'), figs = {};
+  Characters.ids.forEach(function (id) {
+    var card = document.createElement('div'); card.className = 'card fig-card';
+    var f = Characters.make(id, { size: 130 }); figs[id] = f; card.appendChild(f);
+    var b = document.createElement('div'); b.textContent = Characters.info[id].name; b.style.fontWeight = '800'; card.appendChild(b);
+    var r = document.createElement('div'); r.className = 'row2';
+    [['froh', 'happy'], ['traurig', 'sad'], ['denkt', 'thinking'], ['spricht', 'talking'], ['normal', '']].forEach(function (m) {
+      var x = document.createElement('button'); x.className = 'btn small ghost'; x.textContent = m[0];
+      x.onclick = function () { m[1] === 'talking' ? Fx.mood(f, 'talking', 2500) : Fx.mood(f, m[1] || null, 0); };
+      r.appendChild(x);
+    });
+    card.appendChild(r); stage.appendChild(card);
+  });
+  var money = document.getElementById('stat-money'), rep = document.getElementById('stat-rep');
+  document.getElementById('b-coins').onclick = function (e) { Fx.coins(e.target, money, 10); };
+  document.getElementById('b-stars').onclick = function (e) { Fx.stars(e.target, rep, 4); };
+  document.getElementById('b-conf').onclick = function (e) { Fx.confetti(e.target, 36); };
+  document.getElementById('b-shake').onclick = function () { Fx.shake(document.getElementById('scene')); };
+  var sc = Scene.make(); document.getElementById('scene').appendChild(sc.el);
+  var clock = document.getElementById('clock'), cl = document.getElementById('clock-l');
+  function upd() { var m = +clock.value; sc.setClock(m); cl.textContent = String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); }
+  clock.oninput = upd; upd();
+  document.querySelectorAll('[data-scene]').forEach(function (b) { b.onclick = function () { Fx.mood(sc.player, b.dataset.scene || null, 0); }; });
+</script>
+</body>
+</html>
