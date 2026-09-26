@@ -19,7 +19,7 @@
     verkaeufer:  { skin: 0xd6a67e, hair: 0x2a2a2a, hairStyle: 'slick',  shirt: 0x1f4f8f, pants: 0x30343a, shoes: 0x161616, belt: true, build: 'stout' },
     gast1:       { skin: 0xf0c4a4, hair: 0x5a3a26, hairStyle: 'ponytail', shirt: 0xe4a0a0, pants: 0x3a4a6a, shoes: 0x2b2b2b, female: true, build: 'slim', height: 1.66 },
     gast2:       { skin: 0xc99672, hair: 0x1f1f1f, hairStyle: 'short',  shirt: 0x6a8f6a, pants: 0x3a3a3a, shoes: 0x2b2b2b, build: 'normal' },
-    gast3:       { skin: 0xf2d0b0, hair: 0xb8b0a0, hairStyle: 'bald',   shirt: 0x9a7a5a, pants: 0x4a4a4a, shoes: 0x2b2b2b, glasses: true, build: 'stout', height: 1.72 }
+    gast3:       { skin: 0xf2d0b0, hair: 0xb8b0a0, hairStyle: 'bald',   shirt: 0x4f6f8f, pants: 0x4a4a4a, shoes: 0x2b2b2b, glasses: true, build: 'stout', height: 1.72 }
   };
 
   var DEFAULTS = { skin: 0xe6b995, hair: 0x3b2a20, hairStyle: 'short', shirt: 0x8a9aa8, pants: 0x3a3f4a, shoes: 0x222222, build: 'normal' };

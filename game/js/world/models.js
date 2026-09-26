@@ -76,9 +76,9 @@
   function bodyMaterial(src, cfg) {
     var m = new THREE.MeshStandardMaterial({ map: src.map, roughness: 0.62, metalness: 0 });
     var skin = lin(cfg.skin), tint = new THREE.Color(skin.r / SKIN_REF.r, skin.g / SKIN_REF.g, skin.b / SKIN_REF.b);
-    var sleeves = cfg.sleeves !== undefined ? cfg.sleeves : (cfg.jacket || cfg.hoodie ? 2 : 1), legs = cfg.shorts || cfg.skirt ? 1 : 2;
+    var sleeves = cfg.sleeves !== undefined ? cfg.sleeves : (cfg.jacket || cfg.hoodie || cfg.vest || cfg.tie ? 2 : 1), legs = cfg.shorts || cfg.skirt ? 1 : 2;
     var u = {
-      uTint: { value: tint }, uTop: { value: lin(cfg.jacket || cfg.shirt) }, uBottom: { value: lin(cfg.pants) },
+      uTint: { value: tint }, uTop: { value: lin(cfg.jacket || cfg.vest || cfg.shirt) }, uArm: { value: lin(cfg.jacket || cfg.shirt) }, uBottom: { value: lin(cfg.pants) },
       uShoes: { value: lin(cfg.shoes) },
       uSleeveX: { value: [T[cfg.female ? 'f' : 'm'].cut.tank, T[cfg.female ? 'f' : 'm'].cut.short, T[cfg.female ? 'f' : 'm'].cut.long][sleeves] },
       uLegY: { value: legs === 1 ? T[cfg.female ? 'f' : 'm'].cut.shorts : T[cfg.female ? 'f' : 'm'].cut.ankle },
@@ -87,13 +87,13 @@
     m.onBeforeCompile = function (s) {
       Object.assign(s.uniforms, u);
       s.vertexShader = 'attribute float aZone;\nflat varying float vZone;\nvarying vec3 vBind;\n' + s.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvZone = aZone; vBind = position;');
-      s.fragmentShader = 'flat varying float vZone;\nvarying vec3 vBind;\nuniform vec3 uTint, uTop, uBottom, uShoes, uCut;\nuniform float uSleeveX, uLegY;\n' + s.fragmentShader.replace('#include <map_fragment>', [
+      s.fragmentShader = 'flat varying float vZone;\nvarying vec3 vBind;\nuniform vec3 uTint, uTop, uArm, uBottom, uShoes, uCut;\nuniform float uSleeveX, uLegY;\n' + s.fragmentShader.replace('#include <map_fragment>', [
         '#include <map_fragment>',
         'float z = floor(vZone + 0.5);',
         'vec3 cloth = vec3(-1.0);',
         'float ax = abs(vBind.x), y = vBind.y;',
         'bool body = z >= 1.0 && z <= 6.0;',
-        'if (body && y >= uCut.x && y < uCut.y + (ax > 0.12 ? 0.3 : 0.0) && ax < uSleeveX) cloth = uTop;',
+        'if (body && y >= uCut.x && y < uCut.y + (ax > 0.12 ? 0.3 : 0.0) && ax < uSleeveX) cloth = z >= 2.0 && z <= 3.0 ? uArm : uTop;',
         'if (body && y < uCut.x && y > uLegY && ax < 0.3) cloth = uBottom;',
         'if ((z == 7.0 || z == 6.0) && y < uCut.z) cloth = uShoes;',
         'if (cloth.x >= 0.0) { float l = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)); diffuseColor.rgb = cloth * (0.9 + 0.1 * clamp(l * 2.0, 0.0, 1.0)); }',
@@ -120,12 +120,12 @@
   function create(cfg) {
     var fem = !!cfg.female, t = T[fem ? 'f' : 'm'];
     var root = new THREE.Group(), model = THREE.SkeletonUtils.clone(t.scene); root.add(model);
-    var head, chest, eyeY = fem ? 1.655 : 1.70, faceZ = fem ? 0.095 : 0.1;
+    var head, chest, bodyMesh, eyeY = fem ? 1.655 : 1.70, faceZ = fem ? 0.095 : 0.1;
     model.traverse(function (o) {
       if (o.isBone && o.name === 'Head') head = o; if (o.isBone && o.name === 'spine_03') chest = o;
       if (o.isMesh) {
         o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false;
-        if (o.name === t.bodyName) o.material = bodyMaterial(o.material, cfg);
+        if (o.name === t.bodyName) { o.material = bodyMaterial(o.material, cfg); bodyMesh = o; }
         else if (/Hair|Face$|Eyebrows/i.test(o.material.name) || /Eyebrows|^Face$/.test(o.name)) o.material = hairMaterial(o.material.map, cfg.hair);
       }
     });
@@ -187,7 +187,24 @@
       look.tx = Math.max(-1.0, Math.min(1.0, Math.atan2(v.x, v.z))) * s;
     };
     ud.talk = function (on) { talking = !!on; };
-    ud.setPose = function (p) { pose = p === 'sit' ? 'sit' : 'stand'; amount = 0; };
+    // Sitzen: Gesäß genau auf die Sitzfläche setzen (Höhe seatH über dem Boden, etwas hinter der Stuhlmitte).
+    // Der tiefste Punkt von Becken und Oberschenkeln in der Sitzanimation wird gemessen und die Figur so verschoben.
+    function fitSeat(seatH) {
+      Object.keys(A).forEach(function (n) { W[n] = n === 'sit' ? 1 : 0; A[n].setEffectiveWeight(W[n]); });
+      mixer.update(0); model.position.set(0, 0, 0); model.updateMatrixWorld(true);
+      var zone = bodyMesh.geometry.attributes.aZone, pos = bodyMesh.geometry.attributes.position, v = new THREE.Vector3(), pts = [], minY = Infinity;
+      for (var i = 0; i < pos.count; i++) {
+        var z = zone.getX(i); if (z !== 4 && z !== 5) continue;
+        v.fromBufferAttribute(pos, i); bodyMesh.boneTransform(i, v); pts.push(v.clone()); if (v.y < minY) minY = v.y;
+      }
+      var sz = 0, n = 0; pts.forEach(function (q) { if (q.y < minY + 0.04) { sz += q.z; n++; } });
+      var s = root.scale.x, cz = n ? sz / n : 0;
+      model.position.set(0, ((seatH || 0.46) - root.position.y) / s - minY, -0.04 / s - cz);
+    }
+    ud.setPose = function (p, seatH) {
+      pose = p === 'sit' ? 'sit' : 'stand'; amount = 0;
+      if (pose === 'sit' && bodyMesh) fitSeat(seatH); else model.position.set(0, 0, 0);
+    };
     ud.pose = function () { return pose; };
     return root;
   }

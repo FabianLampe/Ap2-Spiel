@@ -337,7 +337,7 @@
   function npc(b, o) {
     var h = Humans.create(Humans.preset(o.figure), o.scale ? { scale: o.scale } : null);
     h.position.set(o.x, o.pose === 'sit' ? 0.05 : 0, o.z); h.rotation.y = o.ry || 0; b.group.add(h);
-    if (o.pose === 'sit') h.userData.setPose('sit');
+    if (o.pose === 'sit') h.userData.setPose('sit', o.seatH);
     var idle = Math.random() * 6;
     b.animators.push(function (dt, t) { h.userData.idle(t + idle, dt); });
     b.npcs.push(h);
