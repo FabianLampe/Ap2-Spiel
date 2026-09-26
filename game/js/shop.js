@@ -19,7 +19,10 @@
   function buySkill(id, api, btn) {
     var name = Tasks.skill(id).name, r = Economy.buySkill(State.s, id);
     if (!r.ok) { api.toast('bad', r.why); return r; }
-    State.save(); api.bought('Skill gekauft: ' + name + '.', btn); return r;
+    State.save(); api.bought('Skill gekauft: ' + name + '.', btn);
+    // Nach dem Kauf erklärt Kalle den neuen Befehl im Erklärfilm
+    if (window.Erklaer && Erklaer.has(id)) setTimeout(function () { Erklaer.play(id); }, 900);
+    return r;
   }
 
   // ---------- Shop ----------
@@ -32,11 +35,12 @@
       btn = el('button', { class: 'btn small' + (c.ok ? '' : ' ghost'), onclick: function () { buySkill(k.id, api, btn); } }, ['Kaufen']);
       if (!c.ok) btn.disabled = true;
     }
+    var film = window.Erklaer ? Erklaer.button(k.id) : null;
     return el('div', { class: 'card skillcard' + (owned ? ' owned' : '') }, [
       el('div', { class: 'row' }, [el('b', {}, [k.name]), el('span', { class: 'spacer' }), status]),
       el('p', { class: 'sub', style: 'margin:6px 0' }, [k.desc]),
       el('p', { class: 'sub', style: 'margin:0 0 8px;font-size:13px' }, [n ? n + ' offene(r) Auftrag/Aufträge brauchen das.' : (owned ? '' : 'Aktuell braucht kein offener Auftrag das.')]),
-      btn ? el('div', { class: 'row' }, [btn, c.ok ? '' : el('span', { class: 'sub', style: 'font-size:13px;margin:0' }, [c.why])]) : el('span')
+      el('div', { class: 'row' }, [btn || '', film || '', btn && !c.ok ? el('span', { class: 'sub', style: 'font-size:13px;margin:0' }, [c.why]) : ''])
     ]);
   }
 

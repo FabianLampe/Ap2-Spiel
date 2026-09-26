@@ -80,6 +80,14 @@ Start in schäbiger Wohnung. Jobs annehmen → Aufgabe lösen → Geld (je schwi
 - Feinabstimmung der Zahlen (Miete, Preise, Honorar) nach Spieltests
 - Job-Fristen (Aufträge, die ablaufen) sind noch nicht umgesetzt
 
+## Erklärfilme (Wunsch des Auftraggebers)
+- **Kalle erklärt** jedes Thema in einem animierten Film im Spiel (keine Videodateien): Untertitel plus Vorlesestimme des Browsers (abschaltbar), Play/Pause, Vor/Zurück, Zeitleiste mit Kapitelmarken, Tempo 0,85×–1,5×. Ausführlich, 3–5 Minuten, ohne Quiz.
+- **Wann:** automatisch direkt nach dem Skill-Kauf im Lernzentrum; jederzeit über „▶ Erklärfilm“ im Handbuch (Einträge mit Film tragen die Marke „▶ Film“) und auf den Skill-Karten.
+- **Visualisierung:** Zeilen wandern sichtbar von der Tabelle ins Ergebnis, Filter streichen Zeilen durch, Gruppen bekommen Farben, eine Leiste zeigt die Ausführungsreihenfolge (FROM → … → LIMIT). Ergebnisse berechnet die echte SQL-Engine, damit alles stimmt.
+- **Referenzen:** animierte SQL-GIFs von dataschool.com, SQL-Visualisierer (sql-tutorial.dev, VizLearn „Query Execution Order“), Visual Guides zu Fensterfunktionen; Grundsätze: ein Gedanke pro Schritt, Hervorheben statt Textwand, gleiche Beispieldaten in allen Filmen.
+- **Stand:** alle 18 SQL-Skills. Danach: Rechnen, UML/Modellierung, Programmierung/Git, Kompass-Themen.
+- Dateien: `game/js/explainer.js` (Player), `game/css/explainer.css`, Drehbücher `game/data/erklaer/sql-*.js` (gemeinsame Beispieldaten in `sql-daten.js`).
+
 ## Bau-Reihenfolge (intern, damit früh etwas spielbar ist)
 1. Kern: Job → Aufgabe lösen → Geld, mit einem einfachen Aufgabentyp (SQL)
 2. Einheitliches Aufgabenformat + Plugin-Schnittstelle für Aufgabentypen

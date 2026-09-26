@@ -1,0 +1,102 @@
+/* Erklärfilme (js/explainer.js) */
+.xp-back{z-index:95}
+.xp-box{background:var(--surface);border:2px solid var(--ink);border-radius:18px;box-shadow:0 6px 0 var(--ink);width:min(1100px,100%);height:min(760px,calc(100dvh - 32px));display:flex;flex-direction:column;overflow:hidden}
+.xp-head{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:2px solid var(--line);background:var(--paper)}
+.xp-kicker{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--teal)}
+.xp-title{margin:0;font-size:22px;line-height:1.2}
+.xp-head>div:first-child{flex:1;min-width:0}
+.xp-chap{background:var(--yellow);border:2px solid var(--ink);border-radius:999px;padding:2px 12px;font-weight:800;font-size:13px;white-space:nowrap}
+.xp-chap:empty{display:none}
+.xp-btn{font:inherit;font-weight:800;min-width:40px;height:40px;border:2px solid var(--ink);border-radius:10px;background:var(--surface);color:var(--ink);cursor:pointer;box-shadow:0 2px 0 var(--ink);padding:0 10px}
+.xp-btn:hover{background:#ffe9b0}.xp-btn:disabled{opacity:.45;cursor:default}
+.xp-btn.main{background:var(--orange);min-width:52px}
+
+/* Bühne */
+.xp-stage{flex:1;overflow:auto;padding:16px 20px;background:
+  radial-gradient(circle at 1px 1px,rgba(37,53,67,.08) 1px,transparent 0) 0 0/18px 18px,#fbf8f0;display:flex;flex-direction:column;gap:calc(14px*var(--xs,1))}
+.xp-top{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+.xp-code{margin:0;background:#1f2b36;color:#e8f0f5;border-radius:12px;padding:calc(12px*var(--xs,1)) calc(16px*var(--xs,1));font:calc(15px*var(--xs,1))/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow:auto;border:2px solid var(--ink);box-shadow:0 3px 0 var(--ink);max-width:100%}
+.xp-code mark{background:var(--yellow);color:var(--ink);border-radius:4px;padding:0 3px;box-shadow:0 0 0 2px var(--yellow);animation:xp-pop .5s ease-out}
+.xp-note{flex:1;min-width:220px;background:#e3f4ec;border:2px solid var(--teal);border-radius:12px;padding:10px 14px;font-weight:700;font-size:calc(16px*var(--xs,1));line-height:1.45;animation:xp-pop .4s ease-out}
+.xp-note.warn{background:#fde4dc;border-color:var(--danger)}
+.xp-html{animation:xp-pop .4s ease-out}
+.xp-tables{display:flex;flex-wrap:wrap;gap:calc(18px*var(--xs,1));align-items:flex-start}
+.xp-arrow{align-self:center;font-size:30px;color:var(--teal);font-weight:900}
+.xp-pipe{display:flex;flex-wrap:wrap;gap:6px}
+.xp-pipe-s{font:calc(12px*var(--xs,1))/1 ui-monospace,Menlo,Consolas,monospace;font-weight:700;padding:6px 8px;border-radius:8px;border:2px solid var(--line);background:var(--surface);color:var(--muted)}
+.xp-pipe-s.done{border-color:var(--teal);color:var(--teal)}
+.xp-pipe-s.on{background:var(--yellow);border-color:var(--ink);color:var(--ink);transform:translateY(-2px);box-shadow:0 2px 0 var(--ink)}
+
+/* Tabellen */
+.xt{background:var(--surface);border:2px solid var(--ink);border-radius:12px;box-shadow:0 3px 0 var(--ink);overflow-x:auto;overflow-y:hidden;font:calc(14px*var(--xs,1))/1.3 ui-monospace,Menlo,Consolas,monospace;max-width:100%}
+.xt.res{border-color:var(--teal);box-shadow:0 3px 0 var(--teal)}
+.xt-label{font:800 calc(13px*var(--xs,1))/1 var(--font);padding:7px 10px;background:var(--paper);border-bottom:2px solid var(--line);letter-spacing:.02em}
+.xt.res .xt-label{background:#d7efe4;color:#124f4a}
+.xt-row{display:flex;border-bottom:1px solid var(--line);transition:transform .75s cubic-bezier(.2,.8,.2,1),background-color .4s,opacity .4s;position:relative}
+.xt-row:last-child{border-bottom:0}
+.xt-head{background:#eef1ea;font-weight:800}
+.xt-c{padding:calc(5px*var(--xs,1)) calc(8px*var(--xs,1));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:content-box;flex:none;transition:background-color .4s,color .4s}
+.xt-c.null{color:#9aa3a8;font-style:italic}
+.xt-empty .xt-c{color:var(--muted);font-style:italic}
+.xt-moving{z-index:3;box-shadow:0 6px 16px rgba(20,30,40,.22)}
+.xt-enter{animation:xt-in .6s ease-out both}
+/* Zeilen-Zustände */
+.xt-row.hit{background:#fff1b8}
+.xt-row.sel{background:#cfeee0}
+.xt-row.miss{opacity:.35}
+.xt-row.miss .xt-c{text-decoration:line-through;text-decoration-color:rgba(183,69,50,.7)}
+.xt-row.del{background:#fbd9d1;opacity:.6}
+.xt-row.del .xt-c{text-decoration:line-through}
+.xt-row.new{background:#cfeee0;animation:xt-in .6s ease-out both}
+.xt-c.hit{background:#ffe07a;font-weight:800}
+.xt-c.miss{color:var(--danger);font-weight:800}
+.xt-c.new{background:#bfe8d2;font-weight:800}
+.g1{background:#ffd9c7!important}.g2{background:#cfe3ff!important}.g3{background:#d6f0cf!important}
+.g4{background:#f2d7f5!important}.g5{background:#fff0b3!important}.g6{background:#d2f1f1!important}
+
+/* Kalle und Untertitel */
+.xp-foot{display:flex;align-items:flex-end;gap:12px;padding:10px 18px 4px;border-top:2px solid var(--line);background:var(--paper)}
+.xp-kalle{flex:none;width:96px;margin-bottom:-6px}
+.xp-bubble{flex:1;position:relative;background:var(--surface);border:2px solid var(--ink);border-radius:14px;padding:10px 14px;margin-bottom:8px;min-height:62px;display:flex;align-items:center}
+.xp-bubble::before{content:"";position:absolute;left:-11px;bottom:18px;width:18px;height:18px;background:var(--surface);border-left:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:rotate(45deg)}
+.xp-caption{margin:0;font-size:17px;line-height:1.45;font-weight:600}
+
+/* Steuerleiste */
+.xp-controls{display:flex;align-items:center;gap:8px;padding:10px 18px 14px;background:var(--paper)}
+.xp-bar{position:relative;flex:1;height:12px;background:var(--line);border-radius:999px;cursor:pointer;min-width:80px;border:2px solid var(--ink)}
+.xp-fill{position:absolute;left:0;top:0;bottom:0;background:var(--orange);border-radius:999px;transition:width .4s}
+.xp-tick{position:absolute;top:-4px;bottom:-4px;width:3px;margin-left:-1px;background:var(--ink);border-radius:2px}
+.xp-count{font-weight:800;font-size:13px;min-width:44px;text-align:center}
+.xp-open{background:var(--mint)}
+
+@keyframes xt-in{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes xp-pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+
+@media (max-width:700px){
+  .xp-box{height:calc(100dvh - 24px)}
+  .xp-head{padding:10px 12px;flex-wrap:wrap}.xp-title{font-size:18px}.xp-chap{order:3}
+  .xp-stage{padding:12px}
+  .xp-kicker{display:none}.xp-title{font-size:16px}.xp-head{gap:8px}
+  .xp-kalle{width:46px}.xp-kalle .fig{width:46px!important;height:auto!important}
+  .xp-foot{padding:8px 10px 2px;gap:8px}.xp-bubble{padding:8px 10px;min-height:0}
+  .xp-caption{font-size:14px}
+  .xp-controls{flex-wrap:wrap;gap:6px;padding:8px 10px 10px}.xp-bar{order:-1;flex-basis:100%}
+  .xp-btn{min-width:36px;height:36px;padding:0 6px}.xp-btn.main{min-width:44px}.xp-count{min-width:34px}
+}
+@media (prefers-reduced-motion:reduce){
+  .xt-row,.xp-fill{transition:none}.xt-enter,.xt-row.new,.xp-note,.xp-html,.xp-code mark{animation:none}
+}
+
+/* Grafiken in Filmen: kleine Tabellen, Rechte-Matrix, Fehlermeldung */
+.xp-mini{border-collapse:separate;border-spacing:0;background:var(--surface);border:2px solid var(--ink);border-radius:12px;overflow:hidden;box-shadow:0 3px 0 var(--ink);font-size:calc(15px*var(--xs,1));max-width:100%}
+.xp-mini th{background:var(--mint);text-align:left;padding:calc(7px*var(--xs,1)) 12px;border-bottom:2px solid var(--ink)}
+.xp-mini td{padding:calc(7px*var(--xs,1)) 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.xp-mini tr:last-child td{border-bottom:0}
+.xp-mini td:first-child{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700}
+.xp-mini.cmp td:first-child,.xp-mini.rights td:first-child{font-family:var(--font)}
+.xp-mini.map{text-align:center}.xp-mini.map td{font-family:ui-monospace,Menlo,Consolas,monospace;text-align:center}.xp-mini.map th{text-align:center}
+.xp-mini .ok{display:inline-block;background:#cfeee0;border:2px solid var(--teal);border-radius:8px;padding:1px 8px;font:700 13px ui-monospace,Menlo,Consolas,monospace}
+.xp-mini .ok.pop{background:var(--yellow);border-color:var(--ink);animation:xp-pop .6s ease-out}
+.xp-mini .no{color:var(--muted)}
+.xp-error{background:#2a1a1a;color:#ffb4a8;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;border:2px solid var(--danger);border-radius:12px;padding:12px 16px;max-width:760px}
+.xp-has{display:inline-block;margin-left:6px;font-size:11px;font-weight:800;background:var(--mint);border:1.5px solid var(--teal);color:#124f4a;border-radius:999px;padding:0 7px;vertical-align:1px}

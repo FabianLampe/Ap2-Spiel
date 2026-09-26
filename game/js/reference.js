@@ -56,6 +56,8 @@
     box.appendChild(el('h2', { style: 'margin:10px 0 4px' }, [e.title]));
     box.appendChild(el('p', { class: 'sub', style: 'margin:0 0 10px' }, [e._chapter.bereich + ' · ' + e._chapter.title]));
     box.appendChild(el('p', { style: 'font-weight:700' }, [e.kurz]));
+    var film = e.skill && window.Erklaer ? Erklaer.button(e.skill) : null;
+    if (film) box.appendChild(el('div', { class: 'row', style: 'margin:0 0 10px' }, [film, el('span', { class: 'sub', style: 'margin:0;font-size:13px' }, ['Kalle erklärt das Thema Schritt für Schritt (' + Erklaer.get(e.skill).title + ').'])]));
     if (e.syntax) { box.appendChild(el('h3', {}, ['Schreibweise'])); box.appendChild(codeBlock(e.syntax, null)); }
     (e.erklaerung || []).forEach(function (p) { box.appendChild(el('p', {}, [p])); });
     if (e.beispiel && e.beispiel.length) {
@@ -96,7 +98,8 @@
       }
     }
     function item(e) {
-      return el('button', { class: 'entry-item', onclick: function () { ui.entry = e.id; rerender(); } }, [el('b', {}, [e.title]), el('span', { class: 'sub' }, [' ' + e.kurz])]);
+      var film = e.skill && window.Erklaer && Erklaer.has(e.skill) ? el('span', { class: 'xp-has', title: 'Mit Erklärfilm' }, ['▶ Film']) : '';
+      return el('button', { class: 'entry-item', onclick: function () { ui.entry = e.id; rerender(); } }, [el('b', {}, [e.title]), film, el('span', { class: 'sub' }, [' ' + e.kurz])]);
     }
     input.addEventListener('input', function () { ui.query = input.value; fill(); });
     wrap.appendChild(input); wrap.appendChild(list); fill();
