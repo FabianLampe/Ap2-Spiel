@@ -9,6 +9,7 @@
       done: {}, attempts: {}, offersSeed: 1, view: { name: 'home' },
       skills: {}, home: 1, car: 0, missedRent: 0, events: [],
       loc: 'wohnung', office: false, coffeeDay: 0,
+      difficulty: 'normal', avatar: 'm1', pname: 'Freelancer', started: false,
       acc: {}, notes: [], noteLevel: 0, rel: {}, taught: {}, lastLesson: {}, pending: [], failed: {}, bookOpen: true
     };
   }
@@ -28,6 +29,14 @@
       this.s = fresh();
       try { localStorage.removeItem(KEY); } catch (e) { /* ignorieren */ }
     },
+    // Spielstand als Datei: exportieren / importieren
+    exportJSON: function () { return JSON.stringify({ game: 'rack-und-ruhm', version: 1, saved: new Date().toISOString(), state: this.s }, null, 1); },
+    importJSON: function (text) {
+      var o; try { o = JSON.parse(text); } catch (e) { return { ok: false, why: 'Die Datei ist kein gültiger Spielstand.' }; }
+      if (!o || o.game !== 'rack-und-ruhm' || !o.state || typeof o.state.day !== 'number') return { ok: false, why: 'Das ist kein Rack-&-Ruhm-Spielstand.' };
+      this.s = Object.assign(fresh(), o.state); this.s.started = true; this.save(); return { ok: true };
+    },
+    hasSave: function () { try { var r = JSON.parse(localStorage.getItem(KEY) || 'null'); return !!(r && r.started); } catch (e) { return false; } },
     // Zeit vergeht; nach Feierabend beginnt der nächste Tag (mit neuen Angeboten und ggf. Rechnung).
     spendTime: function (min) {
       this.s.minutes += min;

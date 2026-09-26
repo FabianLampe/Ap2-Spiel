@@ -1,31 +1,42 @@
 <!doctype html>
-<html lang="de"><head><meta charset="utf-8"><title>Figuren-Vorschau</title>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Figuren-Vorschau</title>
 <style>html,body{margin:0;height:100%;background:#1b232b;font-family:ui-rounded,Arial,sans-serif;color:#fff}#c{position:fixed;inset:0}
 #ui{position:fixed;left:12px;top:12px;display:flex;gap:6px;flex-wrap:wrap;z-index:2}button{font:inherit;padding:4px 10px;border-radius:8px;border:2px solid #253543;background:#ffcf5b;cursor:pointer}
-#hint{position:fixed;left:12px;bottom:10px;opacity:.7;font-size:13px}</style></head>
+#hint{position:fixed;left:12px;bottom:10px;opacity:.7;font-size:13px}
+#ui{max-width:calc(100% - 48px);padding:12px;background:#fff7e9;color:#27343e;border:2px solid #27343e;border-radius:14px;box-shadow:0 4px 0 #121a21;align-items:center}
+button,select{font:14px/1.4 "Trebuchet MS",Arial,sans-serif;min-height:36px;padding:6px 12px;color:#27343e;border:2px solid #27343e;border-radius:8px}
+button:hover{background:#ffe4a0}button:focus-visible,select:focus-visible{outline:3px solid #147d91;outline-offset:3px}
+#hint{opacity:1;background:#1b232b;padding:8px 12px;border-radius:8px;max-width:calc(100% - 48px);line-height:1.5}
+</style></head>
 <body><div id="c"></div><div id="ui"></div><div id="hint">Maus ziehen: drehen · Mausrad: Zoom · Knöpfe: Pose und Sprechen</div>
 <script src="../vendor/three.min.js"></script><script src="../js/world/humans.js"></script>
 <script>
 var el=document.getElementById('c'),r=new THREE.WebGLRenderer({antialias:true});r.setPixelRatio(Math.min(devicePixelRatio,2));r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;
 r.outputEncoding=THREE.sRGBEncoding;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=.9;el.appendChild(r.domElement);
-var s=new THREE.Scene();s.background=new THREE.Color(0x2a3540);var cam=new THREE.PerspectiveCamera(40,1,.1,50);
+var s=new THREE.Scene();s.background=new THREE.Color(0x2a3540);var cam=new THREE.PerspectiveCamera(40,1,.1,150);
 s.add(new THREE.HemisphereLight(0xdfe8f5,0x8a7a6a,.55));var sun=new THREE.DirectionalLight(0xfff2dd,.9);sun.position.set(3,6,4);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-8;sun.shadow.camera.right=8;sun.shadow.camera.top=4;sun.shadow.camera.bottom=-4;s.add(sun);
 var fl=new THREE.Mesh(new THREE.PlaneGeometry(30,10),new THREE.MeshStandardMaterial({color:0x6b7580,roughness:.9}));fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;s.add(fl);
 var ids=Object.keys(Humans.PRESETS),figs=[];ids.forEach(function(id,i){var h=Humans.create(Humans.preset(id));h.position.x=(i-(ids.length-1)/2)*1.05;h.rotation.y=.15;s.add(h);figs.push({id:id,h:h});});
 var ui=document.getElementById('ui');function btn(t,f){var b=document.createElement('button');b.textContent=t;b.onclick=f;ui.appendChild(b);}
-btn('Stehen',function(){figs.forEach(function(f){f.h.userData.setPose('stand');f.h.userData.talk(false);});});
-btn('Sitzen',function(){figs.forEach(function(f){f.h.userData.setPose('sit');});});
-btn('Winken',function(){figs.forEach(function(f){f.h.userData.setPose('wave');});});
+btn('Stehen',function(){walk=false;figs.forEach(function(f){f.h.userData.setPose('stand');f.h.userData.talk(false);});});
+btn('Sitzen',function(){walk=false;figs.forEach(function(f){f.h.userData.setPose('sit');});});
+btn('Winken',function(){walk=false;figs.forEach(function(f){f.h.userData.setPose('wave');});});
 btn('Sprechen',function(){figs.forEach(function(f){f.h.userData.talk(true);});});
-btn('Laufen',function(){walk=!walk;});
-var yaw=0,pitch=.12,dist=7.5,down=false,lx=0,ly=0,walk=false,t=0,ph=0,clock=new THREE.Clock(),focus=-1;
-btn('Nahansicht',function(){focus=(focus+1)%figs.length;dist=1.5;});btn('Alle',function(){focus=-1;dist=7.5;});
+btn('Laufen',function(){walk=!walk;figs.forEach(function(f){f.h.userData.setPose('stand');});});
+var yaw=0,pitch=.12,dist=18,down=false,lx=0,ly=0,walk=false,t=0,ph=0,clock=new THREE.Clock(),focus=-1;
+btn('Nahansicht',function(){focus=(focus+1)%figs.length;dist=1.5;});btn('Alle',function(){focus=-1;dist=18;yaw=0;pitch=.12;});
+var choose=document.createElement('select');choose.setAttribute('aria-label','Figur in Nahansicht');
+ids.forEach(function(id,i){var option=document.createElement('option');option.value=i;option.textContent=id;choose.appendChild(option);});
+choose.onchange=function(){focus=Number(choose.value);dist=1.1;};ui.appendChild(choose);
+btn('Porträt',function(){focus=Number(choose.value);dist=.8;yaw=0;pitch=0;});
+btn('Profil',function(){focus=Number(choose.value);dist=1.4;yaw=Math.PI/2;pitch=0;});
 r.domElement.onpointerdown=function(e){down=true;lx=e.clientX;ly=e.clientY;};window.onpointerup=function(){down=false;};
 window.onpointermove=function(e){if(!down)return;yaw-=(e.clientX-lx)*.006;pitch=Math.max(-.2,Math.min(1,pitch+(e.clientY-ly)*.004));lx=e.clientX;ly=e.clientY;};
-r.domElement.onwheel=function(e){dist=Math.max(.8,Math.min(14,dist+e.deltaY*.004));e.preventDefault();};
+r.domElement.onwheel=function(e){dist=Math.max(.8,Math.min(30,dist+e.deltaY*.004));e.preventDefault();};
 function size(){r.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();}size();onresize=size;
 (function loop(){requestAnimationFrame(loop);var dt=Math.min(clock.getDelta(),.05);t+=dt;ph+=dt*6;
  figs.forEach(function(f){f.h.userData.walk(ph,walk?.8:0);f.h.userData.idle(t+f.h.position.x,dt);});
  var tx=focus<0?0:figs[focus].h.position.x,ty=focus<0?1:1.55;
- cam.position.set(tx+Math.sin(yaw)*Math.cos(pitch)*dist,ty+Math.sin(pitch)*dist,Math.cos(yaw)*Math.cos(pitch)*dist);cam.lookAt(tx,ty,0);r.render(s,cam);})();
+ var viewDist=focus<0?Math.max(dist,7.1/Math.tan(cam.fov*Math.PI/360)/cam.aspect):dist;
+ cam.position.set(tx+Math.sin(yaw)*Math.cos(pitch)*viewDist,ty+Math.sin(pitch)*viewDist,Math.cos(yaw)*Math.cos(pitch)*viewDist);cam.lookAt(tx,ty,0);r.render(s,cam);})();
 </script></body></html>

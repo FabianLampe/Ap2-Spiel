@@ -80,7 +80,8 @@
   }
 
   function make(id, opts) {
-    var c = FIGURES[id]; if (!c) throw new Error('Unbekannte Figur: ' + id);
+    var c = typeof id === 'object' ? id : FIGURES[id]; if (!c) throw new Error('Unbekannte Figur: ' + id);
+    if (typeof id === 'object') id = 'custom';
     var size = (opts && opts.size) || 120;
     var wrap = document.createElement('div');
     wrap.innerHTML =
@@ -89,5 +90,6 @@
     return wrap.firstChild;
   }
 
-  window.Characters = { make: make, ids: Object.keys(FIGURES), info: FIGURES };
+  function setPlayer(cfg) { FIGURES.spieler = Object.assign({}, FIGURES.spieler, cfg); }
+  window.Characters = { make: make, setPlayer: setPlayer, ids: Object.keys(FIGURES), info: FIGURES };
 })();

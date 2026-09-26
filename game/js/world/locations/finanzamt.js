@@ -7,7 +7,7 @@ World.registerLocation({
 
     var R = Props.room(b, {
       w: 9, d: 7, h: 2.8,
-      floor: { tex: 'tile', color: '#8fa595', repeat: [5, 4], rough: 0.5 },
+      floor: { tex: 'tile', color: '#92a397', repeat: [5, 4], rough: 0.68 },
       wall: { tex: 'plaster', color: '#d7dccd' }, trim: 0xb8c0b0,
       doors: [{ wall: 'S', pos: 2.5, w: 1.0 }],
       windows: [
@@ -109,9 +109,9 @@ World.registerLocation({
     [[-2.2, -0.2], [2.0, -0.2], [-2.2, 2.0], [2.0, 2.0]].forEach(function (p) {
       Props.box(b, { w: 1.4, h: 0.05, d: 0.12, x: p[0], y: 2.62, z: p[1], mat: tubeMat, cast: false });
     });
-    Props.pointLight(b, { x: -2.2, y: 2.4, z: 0.4, color: 0xdafff0, intensity: 0.55, dist: 8 });
-    Props.pointLight(b, { x: 2.0, y: 2.4, z: 0.4, color: 0xdafff0, intensity: 0.55, dist: 8 });
-    var flick = Props.pointLight(b, { x: 0, y: 2.4, z: -2.0, color: 0xe8fff4, intensity: 0.6, dist: 7 });
+    Props.pointLight(b, { x: -2.2, y: 2.4, z: 0.4, color: 0xe6f4eb, intensity: 0.55, dist: 8 });
+    Props.pointLight(b, { x: 2.0, y: 2.4, z: 0.4, color: 0xe6f4eb, intensity: 0.55, dist: 8 });
+    var flick = Props.pointLight(b, { x: 0, y: 2.4, z: -2.0, color: 0xedf5ed, intensity: 0.6, dist: 7 });
     b.animators.push(function (dt, t) {
       var f = (Math.sin(t * 23) > 0.96 && Math.sin(t * 0.7) > 0.6) ? 0.25 : 1;   // gelegentliches Flackern
       flick.intensity = 0.6 * f;
@@ -128,7 +128,8 @@ World.registerLocation({
     b.spawns.default = { x: 2.5, z: maxZ - 1.0, ry: Math.PI };
     b.spawns.door = b.spawns.default;
 
-    b.lighting = { bg: 0x121a1a, sun: 0.75, hemi: 0.6, exposure: 0.92, sunColor: 0xe8fff4 };
+    // Abgestimmtes Tageslicht und Bodenreflexion, ohne zusätzliche Lichtquellen.
+    b.lighting = { bg: 0x121a1a, sun: 0.75, hemi: 0.6, exposure: 0.92, sunColor: 0xf0f5e9, sky: 0xe4ecf0, ground: 0x707969 };
     return b;
   }
 });

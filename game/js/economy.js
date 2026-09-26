@@ -1,6 +1,12 @@
 // Wirtschaft: Wohnung, Auto, wöchentliche Kosten, Skills kaufen. Alle Zahlen stehen hier an einer Stelle.
 (function () {
   var FIXED_COSTS = 40;          // Strom, Internet usw. pro Woche
+  // Schwierigkeit: pay = Honorar, rent = Miete/Nebenkosten, limit = Fristlänge, fine = Nachzahlung bei falscher Antwort, start = Startgeld
+  var DIFF = {
+    leicht: { id: 'leicht', name: 'Leicht',  pay: 1.25, rent: 0.7,  limit: 1.5,  fine: 0,   start: 300, desc: 'Mehr Honorar, günstigere Miete, lange Fristen, keine Strafen bei falschen Antworten.' },
+    normal: { id: 'normal', name: 'Normal',  pay: 1,    rent: 1,    limit: 1,    fine: 1,   start: 150, desc: 'So ist das Spiel gedacht.' },
+    schwer: { id: 'schwer', name: 'Schwer',  pay: 0.85, rent: 1.25, limit: 0.75, fine: 1.5, start: 100, desc: 'Weniger Honorar, teurere Miete, knappe Fristen und höhere Strafen.' }
+  };
   var HOMES = [
     null,
     { tier: 1, name: 'Schäbige Einzimmerbude', price: 0,    rent: 250, dayEnd: 17, timeFactor: 1.00, desc: 'Feuchter Fleck an der Wand, eine Fliege als Mitbewohner. Es reicht zum Arbeiten.' },
@@ -24,14 +30,16 @@
   var Economy = {
     HOMES: HOMES, CARS: CARS, OFFICE: OFFICE, NOTEBOOK: NOTEBOOK, COFFEE_PRICE: COFFEE_PRICE, FIXED_COSTS: FIXED_COSTS,
 
+    DIFF: DIFF,
+    diff: function (s) { return DIFF[(s && s.difficulty) || 'normal'] || DIFF.normal; },
     home: function (s) { return HOMES[s.home]; },
     car: function (s) { return CARS[s.car]; },
     dayEnd: function (s) { return HOMES[s.home].dayEnd * 60; },
     timeFactor: function (s) { return HOMES[s.home].timeFactor * (s.office && s.loc === 'buero' ? OFFICE.timeFactor : 1); },
     payFactor: function (s) { return 1 + CARS[s.car].bonus; },
     weeklyBill: function (s) {
-      var off = s.office ? OFFICE.rent : 0;
-      return { rent: HOMES[s.home].rent, fixed: FIXED_COSTS, car: CARS[s.car].upkeep, office: off, total: HOMES[s.home].rent + FIXED_COSTS + CARS[s.car].upkeep + off };
+      var f = Economy.diff(s).rent, off = Math.round((s.office ? OFFICE.rent : 0) * f), rent = Math.round(HOMES[s.home].rent * f), fixed = Math.round(FIXED_COSTS * f);
+      return { rent: rent, fixed: fixed, car: CARS[s.car].upkeep, office: off, total: rent + fixed + CARS[s.car].upkeep + off };
     },
     noteCap: function (s) { return NOTEBOOK[s.noteLevel || 0].cap; },
     upgradeNotebook: function (s) {

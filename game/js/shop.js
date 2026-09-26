@@ -74,7 +74,7 @@
         el('div', { class: 'row' }, [el('b', {}, ['Stufe ' + h.tier + ': ' + h.name]), el('span', { class: 'spacer' }), isCur ? el('span', { class: 'badge' }, ['Du wohnst hier']) : (done ? el('span', { class: 'badge' }, ['✔ hinter dir']) : el('span', { class: 'badge d2' }, [euro(h.price)]))]),
         el('p', { class: 'sub', style: 'margin:8px 0' }, [h.desc]),
         el('ul', { class: 'facts' }, [
-          el('li', {}, ['Miete: ' + euro(h.rent) + ' pro Woche']),
+          el('li', {}, ['Miete: ' + euro(Math.round(h.rent * Economy.diff(State.s).rent)) + ' pro Woche']),
           el('li', {}, ['Arbeitsende: ' + h.dayEnd + ':00 Uhr']),
           el('li', {}, [h.timeFactor === 1 ? 'Aufträge dauern normal lang' : 'Aufträge dauern ' + Math.round((1 - h.timeFactor) * 100) + ' % kürzer'])
         ]),
@@ -118,7 +118,7 @@
     return el('div', { class: 'grid' }, [el('div', { class: 'card tier' + (has ? ' current' : '') }, [
       el('div', { class: 'row' }, [el('b', {}, [o.name]), el('span', { class: 'spacer' }), has ? el('span', { class: 'badge' }, ['Gemietet']) : el('span', { class: 'badge d2' }, [euro(o.rent) + ' pro Woche'])]),
       el('p', { class: 'sub', style: 'margin:8px 0' }, [o.desc]),
-      el('ul', { class: 'facts' }, [el('li', {}, ['Miete: ' + euro(o.rent) + ' pro Woche, dazu einmalig ' + euro(o.setup) + ' Einrichtung']), el('li', {}, ['Kein Kaffee nötig (spart ' + euro(Economy.COFFEE_PRICE) + ' am Tag)']), el('li', {}, ['Aufträge im Büro sind 10 % schneller'])]),
+      el('ul', { class: 'facts' }, [el('li', {}, ['Miete: ' + euro(Math.round(o.rent * Economy.diff(State.s).rent)) + ' pro Woche, dazu einmalig ' + euro(o.setup) + ' Einrichtung']), el('li', {}, ['Kein Kaffee nötig (spart ' + euro(Economy.COFFEE_PRICE) + ' am Tag)']), el('li', {}, ['Aufträge im Büro sind 10 % schneller'])]),
       btn
     ])]);
   }

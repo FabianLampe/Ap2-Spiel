@@ -10,7 +10,7 @@ World.registerLocation({
 
     Props.room(b, {
       w: W, d: D, h: H,
-      floor: { tex: 'marble', color: '#d8d6d0', repeat: [4, 3], rough: 0.3 },
+      floor: { tex: 'marble', color: '#d8d9d3', repeat: [4, 3], rough: 0.25 },
       wall: { tex: 'plaster', color: '#dfe3e6' }, trim: 0x3b2a20,
       doors: [{ wall: 'S', pos: 0, w: 1.2, h: 2.4 }],
       windows: [
@@ -21,7 +21,7 @@ World.registerLocation({
     });
 
     var wood = 0x3d2a1e, woodLight = 0x5a3f2c, brass = 0xb89a55, steel = 0x8f979d;
-    var brassM = { metal: 0.8, rough: 0.3 };
+    var brassM = { metal: 0.72, rough: 0.36 };
 
     // Dunkler Holzsockel an den Wänden (Wandvertäfelung, nur Nord- und Ostseite ohne Fenster)
     Props.box(b, { w: W - 0.1, h: 1.0, d: 0.05, x: 0, y: 0, z: -hd + 0.03, color: wood, tex: 'wood', cast: false });
@@ -168,7 +168,8 @@ World.registerLocation({
     b.spawns.default = { x: 0, z: hd - 1.1, ry: Math.PI };
     b.spawns.door = b.spawns.default;
 
-    b.lighting = { bg: 0x141a22, sun: 0.85, hemi: 0.55, exposure: 0.93, sunColor: 0xeaf1ff };
+    // Abgestimmtes Tageslicht und Bodenreflexion, ohne zusätzliche Lichtquellen.
+    b.lighting = { bg: 0x141a22, sun: 0.85, hemi: 0.55, exposure: 0.93, sunColor: 0xf0f3ff, sky: 0xd8e8ff, ground: 0x82705b };
     return b;
   }
 });

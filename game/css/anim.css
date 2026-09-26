@@ -114,3 +114,16 @@
 }
 .mentor.compact .bubble{min-height:0;padding:6px 12px}
 .mentor.compact .bubble::before{top:14px}
+
+/* Ruhigere Bewegung: kurze Rückmeldung, ohne die Lesefläche springen zu lassen. */
+.btn,.entry-item,summary{transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease}
+.grid .card{animation-duration:.25s}
+.grid .card:hover{transform:translateY(-1px);box-shadow:0 4px 0 var(--edge,#253543),0 10px 22px rgba(25,35,40,.12)}
+.bubble{padding:14px 18px;line-height:1.65;box-shadow:0 3px 0 var(--edge,#253543)}
+.mentor{min-width:0}.mentor .fig{flex-shrink:0}.mentor .bubble{min-width:0;overflow-wrap:anywhere}
+.coach{animation-name:coach-enter}
+@keyframes coach-enter{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .grid .card:hover{transform:none}.fx-layer{display:none}
+}

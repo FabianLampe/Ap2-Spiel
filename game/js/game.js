@@ -40,7 +40,7 @@
   function payFor(task) {
     var tries = State.s.attempts[task.id] || 0;
     var factor = Math.max(0.4, 1 - 0.15 * Math.max(0, tries - 1)); // erster Fehlversuch frei
-    return Math.round(PAY[task.difficulty] * factor * Economy.payFactor(State.s));
+    return Math.round(PAY[task.difficulty] * factor * Economy.payFactor(State.s) * Economy.diff(State.s).pay);
   }
   function timeFor(task) { return Math.max(10, Math.round(TIME[task.difficulty] * Economy.timeFactor(State.s))); }
   function missingFor(task) { return Economy.missingSkills(State.s, task); }
@@ -167,7 +167,7 @@
     var task = Tasks.get(id);
     if (!task) { go({ name: 'home' }); return el('div'); }
     if (missingFor(task).length && !State.s.done[id]) { setTimeout(function () { go({ name: 'home' }); Shop.missingDialog(task, api); }, 0); return el('div'); }
-    if (!task.figure && !State.s.done[id] && !State.s.acc[id]) State.s.acc[id] = { start: State.abs(), due: State.abs() + LIMIT[task.difficulty] };
+    if (!task.figure && !State.s.done[id] && !State.s.acc[id]) State.s.acc[id] = { start: State.abs(), due: State.abs() + Math.round(LIMIT[task.difficulty] * Economy.diff(State.s).limit) };
     var plugin = Tasks.plugin(task.type), isNpc = !!task.figure, done = !!State.s.done[id] || !!State.s.failed[id];
     var wrap = el('div');
     var bookOpen = State.s.bookOpen !== false;
@@ -447,6 +447,21 @@
     if (!WM) { State.s.view = { name: 'home' }; render(); return; }
     document.body.classList.add('has-world');
     World.setApi(api3d);
+    function startOpts() {
+      return {
+        hasSave: State.hasSave(),
+        onContinue: function () { Menu.close(); },
+        onNew: function (o) {
+          State.reset(); var s = State.s; s.avatar = o.avatar; s.pname = o.name; s.difficulty = o.difficulty; s.money = Economy.DIFF[o.difficulty].start; s.started = true; State.save(); location.reload();
+        }
+      };
+    }
+    function applyAvatar() { Characters.setPlayer(Avatars.figure2D(State.s.avatar)); World.setAvatar(Avatars.presetName(State.s.avatar)); }
+    applyAvatar();
+    if (!State.s.started && !State.hasSave()) Menu.showStart(startOpts());
+    var openPause = function () { if (winOpen || Menu.isOpen() || document.querySelector('.modal-back')) return; Menu.showPause({ startOpts: startOpts }); };
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !winOpen && !Menu.isOpen() && !document.querySelector('.modal-back')) { openPause(); e.preventDefault(); } else if (e.key === 'Escape' && Menu.isOpen() && document.getElementById('menu-pause')) { Menu.close(); } });
+    var hm = document.getElementById('hud-menu'); if (hm) hm.addEventListener('click', openPause);
     var start = State.s.loc && World.location(State.s.loc) ? State.s.loc : 'wohnung';
     if (start === 'buero' && !State.s.office) start = 'wohnung';
     State.s.loc = start; State.s.view = { name: 'home' };

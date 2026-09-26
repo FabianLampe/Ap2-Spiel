@@ -18,7 +18,7 @@ World.registerLocation({
 
     var R = Props.room(b, {
       w: w, d: d, h: tier === 4 ? 3.4 : 2.7,
-      floor: { tex: LOOK.tex, color: LOOK.floor, repeat: [w / 2.2, d / 2.2] },
+      floor: { tex: LOOK.tex, color: LOOK.floor, repeat: [w / 2.2, d / 2.2], rough: tier === 1 ? 0.92 : (tier === 4 ? 0.48 : 0.72) },
       wall: { tex: tier === 1 ? 'plaster' : 'wallpaper', color: LOOK.wall }, trim: LOOK.trim,
       doors: [{ wall: 'S', pos: hw - 1.2, w: 1.0 }],
       windows: tier === 4 ? [{ wall: 'N', pos: -1.6, w: 2.4, h: 1.9, sill: 0.5 }, { wall: 'N', pos: 1.6, w: 2.4, h: 1.9, sill: 0.5 }]
@@ -81,7 +81,8 @@ World.registerLocation({
     b.spawns.door = b.spawns.default;
     b.spawns.bed = { x: -hw + 1.9, z: -hd + 2.4, ry: Math.PI / 2 };
 
-    b.lighting = { bg: 0x1c232b, sunDir: [0.5, 1, 0.6], sun: tier === 1 ? 0.55 : 0.8, hemi: tier === 1 ? 0.4 : 0.5, exposure: tier === 1 ? 0.85 : 0.92 };
+    // Abgestimmtes Tageslicht und Bodenreflexion, ohne zusätzliche Lichtquellen.
+    b.lighting = { bg: 0x1c232b, sunDir: [0.5, 1, 0.6], sun: tier === 1 ? 0.55 : 0.8, hemi: tier === 1 ? 0.4 : 0.5, exposure: tier === 1 ? 0.88 : 0.94, sunColor: tier === 1 ? 0xffe3bb : 0xffefda, sky: 0xe0eafa, ground: tier === 1 ? 0x80664f : 0x8c8272 };
     return b;
   }
 });

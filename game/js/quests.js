@@ -25,7 +25,7 @@
     addRel: function (fig, d) { S().rel[fig] = Math.max(0, Math.min(100, Q.rel(fig) + d)); },
     // Belohnung skaliert mit der Beziehung: 0 -> 70 %, 50 -> 100 %, 100 -> 130 %
     rewardFor: function (task) { return Math.round(REWARD[task.difficulty] * (0.7 + Q.rel(task.figure) / 100 * 0.6)); },
-    fineFor: function (task) { return FINE[task.difficulty]; },
+    fineFor: function (task) { return Math.round(FINE[task.difficulty] * Economy.diff(S()).fine); },
 
     // ---------- Notizbuch ----------
     cap: function () { return Economy.noteCap(S()); },

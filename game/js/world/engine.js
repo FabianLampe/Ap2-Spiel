@@ -211,6 +211,10 @@
   };
   W.setPaused = function (p) { W.paused = !!p; if (p) keys = {}; };
   W.nearest = function () { return nearest; };
+  W.setAvatar = function (name) {
+    var old = W.player.group, p = Humans.create(Humans.preset(name));
+    p.position.copy(old.position); p.rotation.copy(old.rotation); scene.remove(old); scene.add(p); W.player.group = p;
+  };
   W.teleport = function (x, z, ry) { W.player.x = x; W.player.z = z; if (ry !== undefined) { W.player.ry = ry; W.player.group.rotation.y = ry; } snapCamera(); };
   W.setApi = function (api) { W.api = api; };
   W.info = function () {

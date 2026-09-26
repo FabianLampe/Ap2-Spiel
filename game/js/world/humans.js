@@ -1,4 +1,4 @@
-// 3D-Figuren (Version 2): Körper aus Drehflächen, Gesicht mit Augen, Lidern, Nase, Lippen, Ohren, Haare in Schichten,
+// 3D-Figuren (Version 3): Körper aus Drehflächen, Gesicht mit Augen, Lidern, Nase, Lippen, Ohren, Haare in Schichten,
 // Kleidung (Kragen, Knöpfe, Sakko, Kapuze, Gürtel), Hände mit Fingern, Schuhe mit Sohle.
 // Humans.create(config) -> THREE.Group; Figur steht bei y = 0, blickt nach +z, ca. 1,75 m groß.
 // group.userData: walk(phase, amount), idle(t), setPose('stand' | 'sit' | 'wave'), lookAt(x, z, strength) (Weltkoordinaten), talk(on)
@@ -33,10 +33,14 @@
   function skinTexture(hex) {
     if (typeof document === 'undefined') return null;
     var cv = document.createElement('canvas'); cv.width = cv.height = 64; var c = cv.getContext('2d'); if (!c) return null;
-    var col = new THREE.Color(hex), r = Math.round(col.r * 255), g = Math.round(col.g * 255), b = Math.round(col.b * 255);
+    // Die sRGB-Textur soll denselben Hautton wie das untexturierte Material liefern.
+    var col = new THREE.Color(hex).convertLinearToSRGB(), r = Math.round(col.r * 255), g = Math.round(col.g * 255), b = Math.round(col.b * 255);
     c.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')'; c.fillRect(0, 0, 64, 64);
     var seed = 7; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
     for (var i = 0; i < 90; i++) { var v = (rnd() - 0.5) * 14; c.fillStyle = 'rgba(' + (v > 0 ? '255,240,230' : '150,100,80') + ',' + Math.abs(v) / 260 + ')'; c.fillRect(rnd() * 64, rnd() * 64, 4 + rnd() * 6, 4 + rnd() * 6); }
+    var glow = c.createRadialGradient(24, 20, 2, 32, 32, 42);
+    glow.addColorStop(0, 'rgba(255,229,207,0.12)'); glow.addColorStop(1, 'rgba(100,55,42,0.09)');
+    c.fillStyle = glow; c.fillRect(0, 0, 64, 64);
     var t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; return t;
   }
 
@@ -52,13 +56,13 @@
     cfg = Object.assign({}, DEFAULTS, cfg || {}, over || {});
     var scale = cfg.scale || ((cfg.height || 1.75) / 1.8);
     var root = new THREE.Group(), body = new THREE.Group(); root.add(body);
-    var skin = new THREE.MeshStandardMaterial({ color: cfg.skin, map: skinTexture(cfg.skin), roughness: 0.6 });
+    var skin = new THREE.MeshStandardMaterial({ color: cfg.skin, map: skinTexture(cfg.skin), roughness: 0.72 });
     if (skin.map) skin.color.set(0xffffff);
     var dark = new THREE.Color(cfg.skin).multiplyScalar(0.82), skinDark = std(dark.getHex(), 0.6);
     var shirt = std(cfg.shirt, 0.9), outer = std(cfg.jacket || cfg.vest || cfg.shirt, 0.85), pants = std(cfg.pants, 0.9), shoes = std(cfg.shoes, 0.55, 0.05), hair = std(cfg.hair, 0.7);
     var sleeveMat = cfg.jacket ? std(cfg.jacket, 0.85) : shirt;
     var female = !!cfg.female, stout = cfg.build === 'stout', slim = cfg.build === 'slim';
-    var W = female ? 0.98 : 1.14, belly = stout ? 0.05 : 0;            // Schulterbreite / Bauch
+    var W = (female ? 0.98 : 1.14) * (slim ? 0.95 : 1), belly = stout ? 0.05 : 0;            // Schulterbreite / Bauch
     var HIP = 0.92;                                                     // Hüfthöhe
 
     // ----- Rumpf: Haut (darunter) und Oberteil -----
@@ -90,37 +94,54 @@
     if (cfg.apron) { var am = std(cfg.apron, 0.9); var bib = sh(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.014), am)); at(bib, 0, HIP + 0.4, 0.138); body.add(bib); var skirtA = sh(new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.36, 0.014), am)); at(skirtA, 0, HIP - 0.04, 0.152); skirtA.rotation.x = 0.05; body.add(skirtA); [-1, 1].forEach(function (sg) { var str = sh(new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.2, 0.01), am)); at(str, sg * 0.08, HIP + 0.55, 0.11); str.rotation.z = -sg * 0.15; body.add(str); }); }
     if (cfg.lanyard) { var ln = sh(new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.4, 0.008), std(0xf87845, 0.7))); at(ln, 0, HIP + 0.4, 0.137); body.add(ln); var bd = sh(new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.008), std(0xffffff, 0.5))); at(bd, 0, HIP + 0.2, 0.14); body.add(bd); }
 
+    // Stofffalten an der Taille und spitze Hemdkragen bleiben nah an der Silhouette.
+    [-1, 1].forEach(function (s) {
+      for (var fold = 0; fold < 2; fold++) {
+        var crease = sh(sc(ball(0.036, topMat, 10, 6), 1.5, 0.10, 0.22));
+        at(crease, s * 0.09, HIP + 0.12 + fold * 0.07, 0.106 + belly * 0.4); crease.rotation.z = s * 0.2; body.add(crease);
+      }
+      if (!cfg.hoodie) {
+        var collarTip = sh(new THREE.Mesh(new THREE.ConeGeometry(0.033, 0.068, 3), shirt));
+        collarTip.scale.z = 0.24; collarTip.rotation.z = Math.PI + s * 0.35;
+        at(collarTip, s * 0.043, 1.492, 0.087); body.add(collarTip);
+      }
+    });
+
     // ----- Hüfte / Hose / Rock -----
     if (cfg.skirt) { var sk = lathe([[0.15, 0.0], [0.19, -0.2], [0.2, -0.26], [0.001, -0.26]], pants, W * 0.98, 0.8); at(sk, 0, HIP + 0.02, 0); body.add(sk); }
     else { var hips = lathe([[0.001, -0.06], [0.165, -0.04], [0.17, 0.05], [0.158, 0.11], [0.001, 0.13]], pants, W * 1.02, 0.78); at(hips, 0, HIP, 0); body.add(hips); }
 
     // ----- Hals und Kragen -----
-    var neck = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.043, 0.05, 0.11, 14), skin)); at(neck, 0, 1.53, 0.006); body.add(neck);
+    var neck = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.041, 0.054, 0.115, 16), skin)); at(neck, 0, 1.53, 0.006); body.add(neck);
     if (!cfg.hoodie) { var collar = sh(new THREE.Mesh(new THREE.TorusGeometry(0.058, 0.014, 8, 20), shirt)); collar.rotation.x = Math.PI / 2; at(collar, 0, 1.505, 0.006); body.add(collar); }
 
     // ----- Kopf -----
     var head = new THREE.Group(); head.position.set(0, 1.69, 0.01); body.add(head);
-    var skull = sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.108, 36, 26), skin), 0.93, 1.07, 1.0)); head.add(skull);
-    var jaw = sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.075, 24, 16), skin), 0.98, 0.78, 0.98)); at(jaw, 0, -0.058, 0.028); head.add(jaw);
+    var skull = sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.108, 36, 26), skin), 0.96, 1.14, 1.0)); head.add(skull);
+    var jaw = sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.075, 24, 16), skin), 0.93, 0.78, 0.94)); at(jaw, 0, -0.058, 0.028); head.add(jaw);
     // Ohren
-    [-1, 1].forEach(function (s) { var ear = sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.024, 12, 10), skin), 0.45, 1.05, 0.8)); at(ear, s * 0.1, 0.0, -0.005); head.add(ear); var inner = sc(new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 6), skinDark), 0.4, 0.9, 0.6); at(inner, s * 0.104, 0.0, 0.0); head.add(inner); });
+    [-1, 1].forEach(function (s) { var ear = sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.024, 12, 10), skin), 0.52, 1.12, 0.8)); at(ear, s * 0.1, 0.0, -0.005); head.add(ear); var inner = sc(new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 6), skinDark), 0.42, 0.8, 0.55); at(inner, s * 0.104, 0.0, 0.0); head.add(inner); var tragus = sh(sc(ball(0.008, skin, 8, 6), 0.7, 1, 0.8)); at(tragus, s * 0.108, -0.008, 0.011); head.add(tragus); });
     // Nase
     var nose = sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.017, 12, 10), skin), 0.9, 1.5, 1.4)); at(nose, 0, -0.008, 0.106); nose.rotation.x = 0.3; head.add(nose);
     var tip = ball(0.013, skin, 10, 8); at(tip, 0, -0.03, 0.118); head.add(tip);
     [-1, 1].forEach(function (s) { var nw = ball(0.008, skin, 8, 6); at(nw, s * 0.012, -0.033, 0.108); head.add(nw); });
     // Augen mit Lidern
     var eyeWhite = std(0xf6f4ee, 0.25), iris = std(cfg.eye || 0x4a6a8a, 0.3), pupilM = std(0x101010, 0.2);
-    var lids = [], eyes = [];
+    var lids = [], eyes = [], brows = [];
+    var gleam = new THREE.MeshBasicMaterial({ color: 0xffffff });
     [-1, 1].forEach(function (s) {
       var g = new THREE.Group(); at(g, s * 0.038, 0.02, 0.087); head.add(g);
       g.add(sc(ball(0.0155, eyeWhite, 16, 12), 1.05, 0.9, 0.9));
-      var ir = new THREE.Mesh(new THREE.CircleGeometry(0.0085, 16), iris); at(ir, 0, 0, 0.0128); g.add(ir);
-      var pu = new THREE.Mesh(new THREE.CircleGeometry(0.0038, 12), pupilM); at(pu, 0, 0, 0.0132); g.add(pu);
+      var irisEdge = new THREE.Mesh(new THREE.CircleGeometry(0.0094, 16), pupilM); at(irisEdge, 0, 0, 0.014); g.add(irisEdge);
+      var ir = new THREE.Mesh(new THREE.CircleGeometry(0.0085, 16), iris); at(ir, 0, 0, 0.0142); g.add(ir);
+      var pu = new THREE.Mesh(new THREE.CircleGeometry(0.0038, 12), pupilM); at(pu, 0, 0, 0.0145); g.add(pu);
+      var shine = new THREE.Mesh(new THREE.CircleGeometry(0.0025, 8), gleam); at(shine, -0.0025, 0.003, 0.0148); g.add(shine);
+      var rim = sh(sc(ball(0.016, skinDark, 14, 8), 1.12, 0.22, 0.45)); at(rim, 0, -0.011, 0.002); g.add(rim);
       var lidPivot = new THREE.Group(); lidPivot.position.set(0, 0.002, 0); g.add(lidPivot);
       var lid = sh(new THREE.Mesh(new THREE.SphereGeometry(0.0166, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), skin)); lid.rotation.x = Math.PI / 2; lidPivot.add(lid);
       lidPivot.rotation.x = -1.8;           // offen
       lids.push(lidPivot); eyes.push(g);
-      var brow = sh(new THREE.Mesh(new THREE.CapsuleGeometry(0.005, 0.038, 4, 8), hair)); brow.rotation.z = Math.PI / 2 + s * -0.12; at(brow, s * 0.038, 0.058, 0.096); head.add(brow);
+      var brow = sh(new THREE.Mesh(new THREE.CapsuleGeometry(0.0035, 0.031, 4, 8), hair)); brow.rotation.z = Math.PI / 2 + s * -0.12; at(brow, s * 0.038, 0.048, 0.096); head.add(brow); brows.push(brow);
       if (cfg.glasses) { var gl = new THREE.Mesh(new THREE.TorusGeometry(0.029, 0.0028, 6, 20), std(0x1a1a1a, 0.35, 0.3)); at(gl, s * 0.038, 0.02, 0.108); head.add(gl); var lens = new THREE.Mesh(new THREE.CircleGeometry(0.028, 16), new THREE.MeshStandardMaterial({ color: 0xcfe6f5, transparent: true, opacity: 0.16, roughness: 0.05 })); at(lens, s * 0.038, 0.02, 0.1085); head.add(lens); var arm = sh(new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.003, 0.1), std(0x1a1a1a, 0.35))); at(arm, s * 0.098, 0.02, 0.05); head.add(arm); }
     });
     if (cfg.glasses) { var br = sh(new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.003, 0.003), std(0x1a1a1a, 0.35))); at(br, 0, 0.026, 0.108); head.add(br); }
@@ -128,10 +149,16 @@
     var lipMat = std(new THREE.Color(cfg.skin).lerp(new THREE.Color(female ? 0xb8505a : 0xa85a52), 0.55).getHex(), 0.5);
     var mouth = new THREE.Group(); at(mouth, 0, -0.058, 0.098); head.add(mouth);
     var inside = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.02, 0.008), std(0x3a1414, 0.7)); inside.scale.y = 0.05; mouth.add(inside);
-    var upper = sh(new THREE.Mesh(new THREE.CapsuleGeometry(0.0055, 0.034, 4, 8), lipMat)); upper.rotation.z = Math.PI / 2; at(upper, 0, 0.004, 0.004); mouth.add(upper);
-    var lower = sh(new THREE.Mesh(new THREE.CapsuleGeometry(0.0075, 0.03, 4, 8), lipMat)); lower.rotation.z = Math.PI / 2; at(lower, 0, -0.008, 0.004); mouth.add(lower);
+    var upper = sh(new THREE.Mesh(new THREE.CapsuleGeometry(0.0035, 0.028, 4, 8), lipMat)); upper.rotation.z = Math.PI / 2; at(upper, 0, 0.004, 0.004); mouth.add(upper);
+    var lower = sh(new THREE.Mesh(new THREE.CapsuleGeometry(0.0045, 0.028, 4, 8), lipMat)); lower.rotation.z = Math.PI / 2; at(lower, 0, -0.008, 0.004); mouth.add(lower);
     if (cfg.mustache) { var mu = sh(sc(new THREE.Mesh(new THREE.CapsuleGeometry(0.008, 0.05, 4, 8), hair), 1, 1, 1)); mu.rotation.z = Math.PI / 2; at(mu, 0, -0.038, 0.108); head.add(mu); }
     if (cfg.beard) { var bd2 = sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.07, 18, 12, 0, Math.PI * 2, Math.PI * 0.45, Math.PI * 0.5), hair), 1.0, 0.9, 1.0)); at(bd2, 0, -0.03, 0.03); head.add(bd2); }
+
+    // Kleine Nasenlöcher und weiche Wangen statt harter Gesichtskanten.
+    [-1, 1].forEach(function (s) {
+      var nostril = sc(ball(0.004, skinDark, 8, 6), 1, 0.5, 0.7); at(nostril, s * 0.01, -0.037, 0.118); head.add(nostril);
+      var cheek = sh(sc(ball(0.031, skin, 16, 10), 1, 0.72, 0.42)); at(cheek, s * 0.055, -0.025, 0.081); head.add(cheek);
+    });
 
     // ----- Haare -----
     var style = cfg.hairStyle;
@@ -150,23 +177,33 @@
       [-1, 1].forEach(function (s) { var sb = sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 6), hair), 0.6, 1.2, 1.1)); at(sb, s * 0.098, 0.0, 0.0); head.add(sb); });
       var fringe = sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), hair), 1.3, 0.4, 0.6)); at(fringe, 0, 0.066, 0.084); head.add(fringe);
     }
+    // Flache, überlappende Strähnen folgen der Kopfkrümmung; keine einzelnen Haar-Meshes.
+    if (style !== 'bald' && style !== 'beanie') {
+      var hairLight = std(new THREE.Color(cfg.hair).lerp(new THREE.Color(0xb9a18b), 0.14).getHex(), 0.8);
+      for (var strand = 0; strand < 7; strand++) {
+        var sx = (strand - 3) * 0.023;
+        var lock = sh(sc(ball(0.035, strand % 3 === 0 ? hairLight : hair, 12, 8), 0.44, 0.42, 1.85));
+        at(lock, sx, 0.113 - Math.abs(sx) * 0.35, 0.009); lock.rotation.z = -0.2; lock.rotation.x = -0.22; head.add(lock);
+      }
+    }
     if (cfg.headset) { var band2 = sh(new THREE.Mesh(new THREE.TorusGeometry(0.118, 0.005, 6, 22, Math.PI), std(0x1c1c1c, 0.4))); band2.rotation.z = 0; at(band2, 0, 0.012, 0); head.add(band2); [-1, 1].forEach(function (s) { var cup = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.022, 14), std(0x1c1c1c, 0.4))); cup.rotation.z = Math.PI / 2; at(cup, s * 0.116, 0.0, 0.0); head.add(cup); }); var mic = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.002, 0.002, 0.09, 6), std(0x1c1c1c, 0.4))); mic.rotation.set(0.9, 0, 1.4); at(mic, 0.09, -0.04, 0.05); head.add(mic); var micTip = ball(0.007, std(0x1c1c1c, 0.4), 8, 6); at(micTip, 0.045, -0.062, 0.085); head.add(micTip); }
 
     // ----- Arme -----
     var upperLen = 0.30, foreLen = 0.26;
     var arms = [-1, 1].map(function (s) {
-      var pivot = new THREE.Group(); pivot.position.set(s * (female ? 0.205 : 0.24), 1.46, 0); body.add(pivot);
+      var pivot = new THREE.Group(); pivot.position.set(s * (female ? 0.18 : 0.215) * (slim ? 0.95 : 1), 1.46, 0); body.add(pivot);
       pivot.add(sh(ball(0.06, sleeveMat, 12, 10)));                                              // Schulterkappe
       var upper = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.045, upperLen, 14), sleeveMat)); at(upper, 0, -upperLen / 2, 0); pivot.add(upper);
       var elbow = new THREE.Group(); elbow.position.y = -upperLen; pivot.add(elbow);
       elbow.add(sh(ball(0.047, sleeveMat, 10, 8)));
-      var fore = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.036, foreLen, 14), (cfg.hoodie || cfg.jacket || true) ? sleeveMat : skin)); at(fore, 0, -foreLen / 2, 0); elbow.add(fore);
+      var fore = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.036, foreLen, 14), sleeveMat)); at(fore, 0, -foreLen / 2, 0); elbow.add(fore);
       var cuff = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.03, 12), cfg.jacket ? shirt : sleeveMat)); at(cuff, 0, -foreLen + 0.006, 0); elbow.add(cuff);
+      var cuffButton = sh(ball(0.005, cfg.jacket ? outer : shirt, 8, 6)); at(cuffButton, s * 0.036, -foreLen + 0.006, 0.015); elbow.add(cuffButton);
       var wrist = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.03, 10), skin)); at(wrist, 0, -foreLen - 0.014, 0); elbow.add(wrist);
       var hand = new THREE.Group(); hand.position.y = -foreLen - 0.03; elbow.add(hand);
-      hand.add(sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.036, 12, 10), skin), 1.0, 0.75, 0.5)));   // Handfläche
-      for (var fi = 0; fi < 4; fi++) { var fg = sh(new THREE.Mesh(new THREE.CapsuleGeometry(0.0095, 0.05 - Math.abs(fi - 1.4) * 0.006, 3, 6), skin)); at(fg, (fi - 1.5) * 0.02, -0.058, 0.004); fg.rotation.x = 0.12; hand.add(fg); }
-      var th = sh(new THREE.Mesh(new THREE.CapsuleGeometry(0.0105, 0.035, 3, 6), skin)); at(th, s * -0.036, -0.02, 0.014); th.rotation.z = s * -0.6; th.rotation.x = 0.3; hand.add(th);
+      hand.add(sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.036, 12, 10), skin), 0.85, 1.05, 0.55)));   // Handfläche
+      for (var fi = 0; fi < 4; fi++) { var fg = sh(new THREE.Mesh(new THREE.CapsuleGeometry(0.007, 0.032 - Math.abs(fi - 1.4) * 0.006, 3, 6), skin)); at(fg, (fi - 1.5) * 0.015, -0.045, 0.006); fg.rotation.x = 0.27 + Math.abs(fi - 1.4) * 0.08; hand.add(fg); }
+      var th = sh(new THREE.Mesh(new THREE.CapsuleGeometry(0.0105, 0.035, 3, 6), skin)); at(th, s * -0.029, -0.014, 0.016); th.rotation.z = s * -0.6; th.rotation.x = 0.3; hand.add(th);
       return { pivot: pivot, elbow: elbow, hand: hand, side: s };
     });
 
@@ -182,8 +219,12 @@
       if (!cfg.skirt) { var hem = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.049, 0.03, 12), pants)); at(hem, 0, -shinLen + 0.03, 0); knee.add(hem); }
       var foot = new THREE.Group(); foot.position.set(0, -shinLen - 0.005, 0.0); knee.add(foot);
       var shoe = sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.06, 14, 10), shoes), 0.95, 0.62, 2.0)); at(shoe, 0, -0.01, 0.055); foot.add(shoe);
-      var sole = sh(sc(new THREE.Mesh(new THREE.BoxGeometry(0.088, 0.014, 0.235), std(0x151515, 0.9)), 1, 1, 1)); at(sole, 0, -0.042, 0.048); foot.add(sole);
-      var lace = sh(new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.004, 0.06), std(0xf5f5f5, 0.6))); at(lace, 0, 0.022, 0.06); lace.rotation.x = -0.35; foot.add(lace);
+      var sole = sh(sc(ball(0.06, std(0x202126, 0.9), 16, 8), 0.79, 0.16, 1.94)); at(sole, 0, -0.042, 0.048); foot.add(sole);
+      var tongue = sh(sc(ball(0.028, shoes, 10, 8), 1, 0.35, 1.3)); at(tongue, 0, 0.018, 0.055); foot.add(tongue);
+      var laceMat = std(cfg.jacket ? 0x35302c : 0xded8c9, 0.85);
+      for (var li = 0; li < 3; li++) {
+        var lace = sh(new THREE.Mesh(new THREE.BoxGeometry(0.037, 0.003, 0.004), laceMat)); at(lace, 0, 0.028 - li * 0.003, 0.036 + li * 0.014); foot.add(lace);
+      }
       return { hip: hip, knee: knee, foot: foot, side: s };
     });
 
@@ -192,15 +233,19 @@
     function eyesLook(x, y) { eyes.forEach(function (g) { g.rotation.y = x; g.rotation.x = -y; }); }
     ud.walk = function (phase, amount) {
       if (pose === 'sit') return;
-      var a = amount || 0; walkAmt = a;
-      legs.forEach(function (l, i) { var ph = phase + (i ? Math.PI : 0); l.hip.rotation.x = Math.sin(ph) * 0.72 * a; l.knee.rotation.x = Math.max(0, -Math.sin(ph + 0.7)) * 1.0 * a; l.foot.rotation.x = -l.knee.rotation.x * 0.35 + Math.max(0, Math.sin(ph)) * 0.2 * a; });
-      arms.forEach(function (ar, i) { var ph = phase + (i ? 0 : Math.PI); ar.pivot.rotation.x = Math.sin(ph) * 0.6 * a; ar.elbow.rotation.x = -0.22 * a - (a > 0.01 ? 0.12 : 0) - Math.max(0, Math.sin(ph)) * 0.35 * a; });
-      body.position.y = Math.abs(Math.sin(phase)) * 0.035 * a; body.rotation.y = Math.sin(phase) * 0.08 * a;
+      var a = Math.max(0, Math.min(1, amount || 0)); walkAmt = a;
+      legs.forEach(function (l, i) { var ph = phase + (i ? Math.PI : 0); l.hip.rotation.x = Math.sin(ph) * 0.38 * a; l.knee.rotation.x = Math.pow(Math.max(0, -Math.cos(ph)), 2) * 0.85 * a; l.foot.rotation.x = -l.hip.rotation.x - l.knee.rotation.x + Math.max(0, -Math.cos(ph)) * 0.12 * a; });
+      arms.forEach(function (ar, i) { var ph = phase + (i ? 0 : Math.PI); ar.pivot.rotation.x = Math.sin(ph) * 0.32 * a; ar.elbow.rotation.x = -0.22 * a - (a > 0.01 ? 0.12 : 0) - Math.max(0, Math.sin(ph)) * 0.35 * a; });
+      // Beckenhöhe folgt der Streckung des Standbeins; die Sohle bleibt am Boden.
+      body.position.y = (thighLen + shinLen + 0.005) * (Math.cos(Math.sin(phase) * 0.38 * a) - 1);
+      body.position.x = Math.cos(phase) * 0.018 * a;
+      body.rotation.z = -Math.cos(phase) * 0.022 * a;
+      body.rotation.y = Math.sin(phase) * 0.055 * a;
     };
     ud.idle = function (t, dt) {
       dt = dt || 0.016;
       var breath = Math.sin(t * 1.9);
-      top.scale.x = W * 1.045 * (1 + breath * 0.008); torsoSkin.scale.x = W * (1 + breath * 0.008);
+      top.scale.x = W * (1 + breath * 0.008); torsoSkin.scale.x = W * (1 + breath * 0.008);
       if (pose === 'wave') { arms[1].pivot.rotation.z = -2.4 + Math.sin(t * 8) * 0.2; arms[1].elbow.rotation.z = -0.5 + Math.sin(t * 8) * 0.3; arms[1].pivot.rotation.x = 0; }
       else if (pose === 'stand' && walkAmt < 0.05) { arms.forEach(function (a, i) { a.pivot.rotation.z = a.side * (0.05 + breath * 0.01); a.elbow.rotation.x = -0.1 - (talking ? 0.5 + Math.sin(t * 5 + i) * 0.3 : 0); a.pivot.rotation.x = talking ? -0.35 - Math.sin(t * 4 + i * 2) * 0.15 : 0; }); }
       // Blinzeln
@@ -211,6 +256,7 @@
       var idleX = look.tx === 0 && look.ty === 0 ? Math.sin(t * 0.5) * 0.22 : 0, idleY = look.tx === 0 && look.ty === 0 ? Math.sin(t * 0.37) * 0.04 : 0;
       head.rotation.y = (look.x + idleX) * 0.75; head.rotation.x = (look.y + idleY) * 0.6;
       eyesLook((look.x + idleX) * 0.25, (look.y + idleY) * 0.25);
+      brows.forEach(function (b, i) { b.position.y = 0.048 + (talking ? Math.sin(t * 3 + i * 0.4) * 0.003 : 0); });
       // Mund: beim Sprechen öffnen und schließen
       var open = talking ? (0.25 + 0.75 * Math.abs(Math.sin(t * 9))) : 0;
       inside.scale.y = 0.05 + open * 0.9; lower.position.y = -0.008 - open * 0.012; upper.position.y = 0.004 + open * 0.002;
@@ -224,7 +270,7 @@
     };
     ud.talk = function (on) { talking = !!on; };
     ud.setPose = function (p) {
-      pose = p; body.position.y = 0; body.rotation.y = 0;
+      pose = p; walkAmt = 0; body.position.set(0, 0, 0); body.rotation.set(0, 0, 0);
       legs.forEach(function (l) { l.hip.rotation.x = 0; l.knee.rotation.x = 0; l.foot.rotation.x = 0; });
       arms.forEach(function (a) { a.pivot.rotation.set(0, 0, 0); a.elbow.rotation.set(0, 0, 0); });
       if (p === 'sit') {

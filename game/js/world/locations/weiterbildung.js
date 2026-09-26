@@ -9,8 +9,8 @@ World.registerLocation({
 
     Props.room(b, {
       w: W, d: D, h: 2.9,
-      floor: { tex: 'tile', color: '#a9b0b3', repeat: [5, 4] },
-      wall: { tex: 'plaster', color: '#eef0ec' }, trim: 0xffffff,
+      floor: { tex: 'tile', color: '#a9b6b1', repeat: [5, 4], rough: 0.72 },
+      wall: { tex: 'plaster', color: '#f0ede2' }, trim: 0xffffff,
       doors: [{ wall: 'S', pos: 3.0, w: 1.0 }],
       windows: [
         { wall: 'S', pos: -2.0, w: 1.5, h: 1.2, sill: 1.0 },
@@ -118,7 +118,8 @@ World.registerLocation({
     b.spawns.default = { x: 3.0, z: hd - 1.0, ry: Math.PI };
     b.spawns.door = b.spawns.default;
 
-    b.lighting = { bg: 0x161c22, sun: 0.9, hemi: 0.55, exposure: 0.95 };
+    // Abgestimmtes Tageslicht und Bodenreflexion, ohne zusätzliche Lichtquellen.
+    b.lighting = { bg: 0x161c22, sun: 0.83, hemi: 0.58, exposure: 0.94, sunColor: 0xfff1da, sky: 0xe3efff, ground: 0x788475 };
     return b;
   }
 });
