@@ -215,6 +215,8 @@
     var old = W.player.group, p = Humans.create(Humans.preset(name));
     p.position.copy(old.position); p.rotation.copy(old.rotation); scene.remove(old); scene.add(p); W.player.group = p;
   };
+  // Für Tests und Screenshots: Kamera direkt setzen
+  W.debugCam = function (yaw, pitch, dist) { cam.yaw = yaw; cam.pitch = pitch; cam.dist = dist; snapCamera(); };
   W.teleport = function (x, z, ry) { W.player.x = x; W.player.z = z; if (ry !== undefined) { W.player.ry = ry; W.player.group.rotation.y = ry; } snapCamera(); };
   W.setApi = function (api) { W.api = api; };
   W.info = function () {

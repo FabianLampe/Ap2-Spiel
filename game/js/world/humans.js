@@ -19,7 +19,7 @@
     verkaeufer:  { skin: 0xd6a67e, hair: 0x2a2a2a, hairStyle: 'slick',  shirt: 0x1f4f8f, pants: 0x30343a, shoes: 0x161616, belt: true, build: 'stout' },
     gast1:       { skin: 0xf0c4a4, hair: 0x5a3a26, hairStyle: 'ponytail', shirt: 0xe4a0a0, pants: 0x3a4a6a, shoes: 0x2b2b2b, female: true, build: 'slim', height: 1.66 },
     gast2:       { skin: 0xc99672, hair: 0x1f1f1f, hairStyle: 'short',  shirt: 0x6a8f6a, pants: 0x3a3a3a, shoes: 0x2b2b2b, build: 'normal' },
-    gast3:       { skin: 0xf2d0b0, hair: 0xb8b0a0, hairStyle: 'bald',   shirt: 0x9a7a5a, pants: 0x4a4a4a, shoes: 0x2b2b2b, glasses: true, build: 'stout', height: 1.72 }
+    gast3:       { skin: 0xf2d0b0, hair: 0xb8b0a0, hairStyle: 'bald',   shirt: 0x4f6f8f, pants: 0x4a4a4a, shoes: 0x2b2b2b, glasses: true, build: 'stout', height: 1.72 }
   };
 
   var DEFAULTS = { skin: 0xe6b995, hair: 0x3b2a20, hairStyle: 'short', shirt: 0x8a9aa8, pants: 0x3a3f4a, shoes: 0x222222, build: 'normal' };
@@ -259,7 +259,7 @@
     var upperLen = 0.30, foreLen = 0.26;
     var arms = [-1, 1].map(function (s) {
       var pivot = new THREE.Group(); pivot.position.set(s * (female ? 0.18 : 0.215) * (slim ? 0.95 : 1), 1.46, 0); body.add(pivot);
-      var shortSl = cfg.sleeves === 'short' && !cfg.jacket;
+      var shortSl = (cfg.sleeves === 1 || cfg.sleeves === 0 || cfg.sleeves === 'short') && !cfg.jacket;   // wie models.js: 0 Träger, 1 kurz, 2 lang
       var armSkin = skin;
       if (shortSl && cfg.tattoo && s === (cfg.tattooSide || 1)) { var tt = tattooTexture(cfg.skin, cfg.tattoo); if (tt) { armSkin = new THREE.MeshStandardMaterial({ map: tt, roughness: 0.72 }); } }
       pivot.add(sh(ball(shortSl ? 0.05 : 0.06, sleeveMat, 12, 10)));                             // Schulterkappe

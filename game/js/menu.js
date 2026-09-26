@@ -6,7 +6,7 @@
     (kids || []).forEach(function (c) { n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
     return n;
   }
-  var previews = null, group = null, root = null, stage = null;
+  var previews = null, root = null, stage = null;
 
   // Einheitliches Licht für Vorschaubilder und Live-Vorschau
   function makeRenderer(w, h, ratio) {
@@ -39,33 +39,13 @@
       lights(sc); sc.add(floorShadow());
       cam.position.set(0, 1.0, 4.4); cam.lookAt(0, 0.92, 0);
       Avatars.list.forEach(function (a) {
-        var g = Humans.create(Humans.preset(Avatars.presetName(a.id))); g.rotation.y = -0.4; sc.add(g);
+        var g = Humans.create(Humans.preset(Avatars.presetName(a.id))); g.rotation.y = -0.4; sc.add(g); if (g.userData.idle) g.userData.idle(0.6, 0.6);
         r.render(sc, cam); previews[a.id] = r.domElement.toDataURL('image/png'); sc.remove(g);
       });
       r.dispose();
     } catch (e) { previews = {}; }
     return previews;
   }
-  // Gruppenbild aller Figuren für den Titelbildschirm
-  function renderGroup() {
-    if (group !== null) return group;
-    group = '';
-    try {
-      var W = 1200, H = 440, r = makeRenderer(W, H);
-      var sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(22, W / H, 0.1, 40);
-      lights(sc);
-      var order = ['m1', 'f1', 'm2', 'f2', 'm3', 'f3', 'm4', 'f4'];
-      order.forEach(function (id, i) {
-        var g = Humans.create(Humans.preset(Avatars.presetName(id))), x = (i - 3.5) * 0.78;
-        g.position.set(x, 0, -Math.abs(i - 3.5) * 0.12); g.rotation.y = -x * 0.12; sc.add(g);
-        var shd = floorShadow(); shd.position.x = x; shd.position.z = g.position.z; sc.add(shd);
-      });
-      cam.position.set(0, 1.2, 7.6); cam.lookAt(0, 0.92, 0);
-      r.render(sc, cam); group = r.domElement.toDataURL('image/png'); r.dispose();
-    } catch (e) { group = ''; }
-    return group;
-  }
-
   // Live-Vorschau: drehbare 3D-Figur mit Atmen und Blinzeln
   function makeStage(host) {
     var st = { ry: -0.35, target: -0.35, fig: null, alive: true };
@@ -74,7 +54,7 @@
       r.domElement.className = 'stage-canvas'; host.appendChild(r.domElement);
       var sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(24, W / H, 0.1, 30);
       lights(sc); sc.add(floorShadow());
-      cam.position.set(0, 1.0, 5.5); cam.lookAt(0, 0.78, 0);
+      cam.position.set(0, 1.05, 5.6); cam.lookAt(0, 0.86, 0);
       var clock = new THREE.Clock(), t = 0;
       st.set = function (id) {
         if (st.fig) sc.remove(st.fig);
@@ -140,27 +120,6 @@
     if (window.World && World.ok) World.setPaused(true);
   }
 
-  // ---- Titelbildschirm ----
-  // opts.onNew({avatar,name,difficulty}), opts.onContinue() (nur wenn Spielstand da), opts.hasSave
-  function showTitle(opts) {
-    open();
-    var msg = el('p', { class: 'sub title-msg' }), img = renderGroup();
-    var btns = el('div', { class: 'title-btns' });
-    if (opts.hasSave) btns.appendChild(el('button', { class: 'btn green big', type: 'button', onclick: function () { close(); opts.onContinue(); } }, ['Weiterspielen']));
-    btns.appendChild(el('button', { class: 'btn big', type: 'button', onclick: function () { showStart(opts); } }, ['Neues Spiel']));
-    btns.appendChild(el('button', { class: 'btn ghost', type: 'button', onclick: function () { pickFile(function (t) { msg.textContent = t; }); } }, ['Spielstand laden (Datei)']));
-    root = el('div', { id: 'menu-title', class: 'menu-screen title-screen', role: 'dialog', 'aria-label': 'Startbildschirm' }, [
-      el('div', { class: 'title-wrap' }, [
-        el('h1', { class: 'title-logo' }, ['Rack & Ruhm']),
-        el('p', { class: 'title-sub' }, ['Vom Freelancer zum Fachinformatiker: Aufträge lösen, Geld verdienen, aufsteigen.']),
-        img ? el('img', { class: 'title-cast', src: img, alt: 'Die acht spielbaren Figuren' }) : el('div', { class: 'title-cast' }),
-        btns, msg
-      ])
-    ]);
-    document.body.appendChild(root);
-    var first = btns.querySelector('button'); if (first) first.focus();
-  }
-
   // ---- Figurenwahl ----
   function showStart(opts) {
     open();
@@ -218,6 +177,41 @@
     stage = makeStage(host);
     if (stage.failed) host.appendChild(pv[sel] ? el('img', { src: pv[sel], alt: '' }) : el('div', {}, []));
     draw(); stage.set(sel);
+  }
+
+  // ---- Titelbild ----
+  // opts.onNew({avatar,name,difficulty}), opts.onContinue() (nur wenn Spielstand da), opts.hasSave
+  function showTitle(opts) {
+    open();
+    var pv = renderPreviews(), sky = el('div', { class: 'ti-city' }), i;
+    for (i = 0; i < 14; i++) {
+      var h = 80 + ((i * 53) % 150), b = el('div', { class: 'ti-bld', style: 'height:' + h + 'px;width:' + (46 + (i * 17) % 40) + 'px' });
+      for (var w = 0; w < Math.floor(h / 26); w++) b.appendChild(el('i', { style: 'animation-delay:' + (((i * 7 + w * 3) % 11) * 0.45) + 's' }));
+      sky.appendChild(b);
+    }
+    var crowd = el('div', { class: 'ti-crowd' });
+    Avatars.list.forEach(function (a, k) {
+      crowd.appendChild(el('div', { class: 'ti-fig', style: 'animation-delay:' + (-k * 1.3) + 's' }, [pv[a.id] ? el('img', { src: pv[a.id], alt: '' }) : el('span')]));
+    });
+    var msg = el('p', { class: 'ti-hint', style: 'color:var(--danger);min-height:1.2em' });
+    function leave(fn) { root.classList.add('leaving'); setTimeout(fn, 350); }
+    var play = opts.hasSave
+      ? el('button', { class: 'btn green ti-play', type: 'button', onclick: function () { leave(function () { close(); opts.onContinue(); }); } }, ['▶ Weiterspielen'])
+      : el('button', { class: 'btn ti-play', type: 'button', onclick: function () { leave(function () { showStart(opts); }); } }, ['▶ Neues Spiel']);
+    var more = el('div', { class: 'ti-more' }, [
+      opts.hasSave ? el('button', { class: 'btn', type: 'button', onclick: function () { leave(function () { showStart(opts); }); } }, ['Neues Spiel']) : '',
+      el('button', { class: 'btn ghost', type: 'button', onclick: function () { pickFile(function (t) { msg.textContent = t; }); } }, ['Spielstand laden (Datei)'])
+    ]);
+    root = el('div', { id: 'menu-title', class: 'menu-screen ti', role: 'dialog', 'aria-label': 'Titelbild' }, [
+      el('div', { class: 'ti-sun' }), el('div', { class: 'ti-cloud c1' }), el('div', { class: 'ti-cloud c2' }), el('div', { class: 'ti-cloud c3' }),
+      sky, el('div', { class: 'ti-road' }), crowd,
+      el('div', { class: 'ti-center' }, [
+        el('h1', { class: 'ti-title' }, ['Rack & Ruhm']),
+        el('p', { class: 'ti-sub' }, ['Vom Freelancer zum Fachinformatiker']),
+        play, more, msg, el('p', { class: 'ti-hint' }, ['Für die AP2 · offline spielbar'])
+      ])
+    ]);
+    document.body.appendChild(root); play.focus();
   }
 
   // ---- Pausenmenü ----

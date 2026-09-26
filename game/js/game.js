@@ -436,7 +436,7 @@
 
   // Start: alle Plugins initialisieren, Aufgaben einsammeln und prüfen, dann 3D-Welt (falls WebGL) oder 2D-Notlösung
   State.load();
-  Promise.all(Tasks.typeIds().map(function (id) { return Tasks.plugin(id).init(); })).then(function () {
+  Promise.all(Tasks.typeIds().map(function (id) { return Tasks.plugin(id).init(); }).concat(window.Models ? [Models.ready] : [])).then(function () {
     Tasks.typeIds().forEach(function (id) {
       var p = Tasks.plugin(id);
       if (!p.tasks) return;
