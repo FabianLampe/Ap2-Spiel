@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Figuren 3D</title>
+<style>html,body{margin:0;height:100%;background:#e9e4d8;font-family:system-ui}#c{width:100%;height:100%;display:block}#l{position:fixed;left:12px;top:8px;font-weight:700;color:#253543}</style></head>
+<body><div id="l">Figuren (Maus ziehen: drehen · Taste W: gehen · S: sitzen · T: reden)</div><canvas id="c"></canvas>
+<script src="../vendor/three.min.js"></script>
+<script src="../js/world/humans.js"></script>
+<script src="../vendor/gltf-loader.js"></script>
+<script src="../vendor/model-data.js"></script>
+<script src="../js/world/models.js"></script>
+<script src="../js/avatars.js"></script>
+<script>
+Models.ready.then(function () {
+  var cv = document.getElementById('c'), r = new THREE.WebGLRenderer({ canvas: cv, antialias: true });
+  r.outputEncoding = THREE.sRGBEncoding; r.toneMapping = THREE.ACESFilmicToneMapping; r.shadowMap.enabled = true;
+  var sc = new THREE.Scene(); sc.background = new THREE.Color(0xe9e4d8);
+  sc.add(new THREE.HemisphereLight(0xffffff, 0x8a7a6a, 0.8));
+  var sun = new THREE.DirectionalLight(0xfff2dd, 1.0); sun.position.set(3, 6, 5); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.left = -10; sun.shadow.camera.right = 10; sun.shadow.camera.top = 5; sun.shadow.camera.bottom = -5; sc.add(sun);
+  var floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 10), new THREE.MeshStandardMaterial({ color: 0xcfc6b4 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; sc.add(floor);
+  var names = Object.keys(Humans.PRESETS).filter(function (n) { return n !== 'spieler'; }), figs = [];
+  var params = new URLSearchParams(location.search), only = params.get('nur'); if (only) names = names.filter(function (n) { return only.split(',').indexOf(n) >= 0; });
+  names.forEach(function (n, i) { var h = Humans.create(Humans.preset(n)); h.position.x = (i - (names.length - 1) / 2) * 0.9; sc.add(h); figs.push(h); });
+  var cam = new THREE.PerspectiveCamera(35, 1, 0.1, 100), yaw = 0, dist = +(params.get('dist') || (names.length * 0.9 + 1.5)), camY = +(params.get('y') || 1.1);
+  function resize() { r.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); } resize(); addEventListener('resize', resize);
+  var drag = null; cv.onpointerdown = function (e) { drag = e.clientX; }; onpointerup = function () { drag = null; }; onpointermove = function (e) { if (drag !== null) { yaw += (e.clientX - drag) * 0.01; drag = e.clientX; } };
+  var mode = params.get('mode') || 'stand';
+  onkeydown = function (e) { if (e.key === 'w') mode = mode === 'walk' ? 'stand' : 'walk'; if (e.key === 's') { mode = mode === 'sit' ? 'stand' : 'sit'; } if (e.key === 't') mode = mode === 'talk' ? 'stand' : 'talk'; apply(); };
+  function apply() { figs.forEach(function (h) { h.userData.setPose(mode === 'sit' ? 'sit' : 'stand', 0.46); h.userData.talk(mode === 'talk'); }); }
+  apply();
+  var clock = new THREE.Clock(), t = 0;
+  window.__yaw = function (v) { yaw = v; };
+  (function loop() { requestAnimationFrame(loop); var dt = Math.min(clock.getDelta(), 0.05); t += dt;
+    figs.forEach(function (h) { h.userData.walk(t * 6, mode === 'walk' ? 0.75 : 0); h.userData.idle(t, dt); });
+    cam.position.set(Math.sin(yaw) * dist, camY + 0.6, Math.cos(yaw) * dist); cam.lookAt(0, camY, 0); r.render(sc, cam); })();
+});
+</script></body></html>

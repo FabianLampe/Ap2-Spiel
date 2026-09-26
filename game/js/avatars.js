@@ -6,7 +6,7 @@
     { id: 'm3', gender: 'm', name: 'Jonas',  look: { skin: 0xf3d3b5, hair: 0xc9a55a, hairStyle: 'slick',  shirt: 0x7a8899, pants: 0x3b4a5a, shoes: 0x2a2320, glasses: true, build: 'slim', height: 1.80 } },
     { id: 'f1', gender: 'f', name: 'Mia',    look: { skin: 0xf0c4a4, hair: 0x5a3a26, hairStyle: 'ponytail', shirt: 0xe4706a, sleeves: 0, pants: 0x3a4a6a, shoes: 0x2b2b2b, female: true, build: 'slim', height: 1.68 } },
     { id: 'f2', gender: 'f', name: 'Aylin',  look: { skin: 0xd6a67e, hair: 0x14100e, hairStyle: 'bob',    shirt: 0x6b8f4e, pants: 0x2f2f38, shoes: 0x2a2a2a, female: true, build: 'normal', height: 1.70 } },
-    { id: 'f3', gender: 'f', name: 'Sophie', look: { skin: 0xf5d2b8, hair: 0xc0451f, hairStyle: 'long',   shirt: 0x4f7a3a, pants: 0x6a4a2e, shorts: true, shoes: 0x2a2a2a, glasses: true, female: true, build: 'slim', height: 1.72 } }
+    { id: 'f3', gender: 'f', name: 'Sophie', look: { skin: 0xf5d2b8, hair: 0xc0451f, hairStyle: 'curly',   shirt: 0x4f7a3a, pants: 0x6a4a2e, shorts: true, shoes: 0x2a2a2a, glasses: true, female: true, build: 'slim', height: 1.72 } }
   ];
   var by = {}; LIST.forEach(function (a) { by[a.id] = a; if (window.Humans) Humans.PRESETS['spieler-' + a.id] = a.look; });
 
