@@ -14,13 +14,13 @@
     previews = {};
     try {
       var W = 240, H = 320, r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
-      r.setSize(W, H); r.setPixelRatio(1);
+      r.setSize(W, H); r.setPixelRatio(1); r.outputEncoding = THREE.sRGBEncoding; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.1;
       var sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, W / H, 0.1, 30);
       sc.add(new THREE.HemisphereLight(0xffffff, 0x998877, 0.9));
       var sun = new THREE.DirectionalLight(0xfff2dd, 0.9); sun.position.set(2, 4, 4); sc.add(sun);
       cam.position.set(0, 1.0, 3.7); cam.lookAt(0, 0.9, 0);
       Avatars.list.forEach(function (a) {
-        var g = Humans.create(Humans.preset(Avatars.presetName(a.id))); g.rotation.y = -0.35; sc.add(g);
+        var g = Humans.create(Humans.preset(Avatars.presetName(a.id))); g.rotation.y = -0.35; sc.add(g); if (g.userData.idle) g.userData.idle(0.6, 0.6);
         r.render(sc, cam); previews[a.id] = r.domElement.toDataURL('image/png'); sc.remove(g);
       });
       r.dispose();
