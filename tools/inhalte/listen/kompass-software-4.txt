@@ -1,0 +1,15 @@
+sql-aggregation-und-gruppierung
+sql-datendefinition
+sql-join
+standardabweichung
+statistische-dateninterpretation
+surrogat-und-natuerliche-schluessel
+testabdeckung
+uml-aktivitaetsdiagramm
+uml-anwendungsfalldiagramm
+uml-klassendiagramm
+uml-sequenzdiagramm
+uml-zustandsdiagramm
+unit-tests
+whitebox-tests
+xml-datenformat

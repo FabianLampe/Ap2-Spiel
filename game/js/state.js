@@ -9,7 +9,7 @@
       done: {}, attempts: {}, offersSeed: 1, view: { name: 'home' },
       skills: {}, home: 1, car: 0, missedRent: 0, events: [],
       loc: 'wohnung', office: false, coffeeDay: 0,
-      notes: [], noteLevel: 0, rel: {}, taught: {}, lastLesson: {}, pending: [], failed: {}, bookOpen: true
+      acc: {}, notes: [], noteLevel: 0, rel: {}, taught: {}, lastLesson: {}, pending: [], failed: {}, bookOpen: true
     };
   }
 
@@ -42,6 +42,8 @@
       }
       return newDay;
     },
+    // Absolute Spielzeit in Minuten seit Tag 1, 00:00 (für Fristen über Tagesgrenzen)
+    abs: function () { return (this.s.day - 1) * 1440 + this.s.minutes; },
     takeEvents: function () { var e = this.s.events; this.s.events = []; return e; },
     clock: function () {
       var m = this.s.minutes, h = Math.floor(m / 60), mm = m % 60;

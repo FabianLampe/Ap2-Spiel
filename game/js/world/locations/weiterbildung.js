@@ -44,7 +44,7 @@ World.registerLocation({
       api.npcTalk({
         figure: 'datenschutz', name: 'Dr. Blattner',
         text: 'Willkommen im Datenwerk. Jeder neue Skill schaltet neue Aufträge frei, und Wissen ist der beste Zinseszins. Aber bitte: Aufgepasst im Unterricht, und den Datenschutz nicht vergessen. Personenbezogene Daten sind kein Spielzeug!',
-        actions: [{ label: 'Skills ansehen', run: function (api2) { api2.openShop('skills'); } }]
+        actions: [{ label: 'Skills ansehen', run: function (api2) { api2.openShop('skills'); } }, { label: 'Notizbuch erweitern', run: function (api2) { api2.openShop('notes'); } }]
       });
     } });
 

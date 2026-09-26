@@ -4,7 +4,9 @@
   var REP = { 1: 3, 2: 5, 3: 8 };
   var TIME = { 1: 30, 2: 60, 3: 90 };
   var DLABEL = { 1: 'leicht', 2: 'mittel', 3: 'schwer' };
-  var TOPIC_LABEL = { datenbank: 'Datenbank', uml: 'UML', programmierung: 'Programmierung', ml: 'Maschinelles Lernen', git: 'Git', wirtschaft: 'Wirtschaft', pruefung: 'Prüfung' };
+  var TOPIC_LABEL = { datenbank: 'Datenbank', uml: 'UML', programmierung: 'Programmierung', ml: 'Maschinelles Lernen', git: 'Git', wirtschaft: 'Wirtschaft', rechnen: 'Rechnen', pruefung: 'Prüfung' };
+  var LIMIT = { 1: 90, 2: 150, 3: 240 };    // Frist in Spielminuten ab Annahme
+  var RUN_COST = 3, MISS_COST = 10;         // Ausführen und Fehlversuch kosten Zeit
   var OFFERS_PER_DAY = 6;
   var app = document.getElementById('app');
   var filterD = 0, filterT = '', feedback = null;
@@ -53,13 +55,14 @@
   var api = {
     toast: function (kind, text) { banner(kind, text); render(true); },
     bought: function (text, fromEl) {
-      banner('ok', text); State.save();
+      banner('ok', text); State.save(); if (window.Sound) Sound.play('buy');
       if (fromEl && fromEl.isConnected) Fx.confetti(fromEl, 16);
       render(true);
     },
     setTab: function (tab) { if (WM) return; go({ name: 'shop', tab: tab }); },
     open: function (task) { go({ name: 'task', id: task.id }); },
     openShop: function () { if (WM) { api3d.openMap(); return; } go({ name: 'shop', tab: 'skills' }); },
+    openHandbuch: function () { if (WM) api3d.openHandbuch(); else go({ name: 'handbuch' }); },
     canBuyHere: function () { return !WM; }
   };
 
@@ -150,15 +153,26 @@
     return wrap;
   }
 
+  function fmtClock(m) { return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); }
+  function deadlineText(due) {
+    var left = due - State.abs(), dueDay = Math.floor(due / 1440) + 1, clock = fmtClock(due % 1440);
+    return '⏱ Frist: ' + (dueDay !== State.s.day ? 'Tag ' + dueDay + ', ' : '') + clock + ' Uhr' + (left > 0 ? ' (noch ' + left + ' Min.)' : ' – überschritten: nur halbes Honorar');
+  }
+  function refreshDeadline(task) {
+    var d = document.getElementById('deadline'), a = State.s.acc[task.id]; if (!d || !a) return;
+    d.textContent = deadlineText(a.due); d.classList.toggle('warn', a.due - State.abs() < 30);
+  }
+
   function renderTask(id) {
     var task = Tasks.get(id);
     if (!task) { go({ name: 'home' }); return el('div'); }
     if (missingFor(task).length && !State.s.done[id]) { setTimeout(function () { go({ name: 'home' }); Shop.missingDialog(task, api); }, 0); return el('div'); }
+    if (!task.figure && !State.s.done[id] && !State.s.acc[id]) State.s.acc[id] = { start: State.abs(), due: State.abs() + LIMIT[task.difficulty] };
     var plugin = Tasks.plugin(task.type), isNpc = !!task.figure, done = !!State.s.done[id] || !!State.s.failed[id];
     var wrap = el('div');
     var bookOpen = State.s.bookOpen !== false;
     wrap.appendChild(el('div', { class: 'row' }, [
-      el('button', { class: 'btn small ghost', onclick: function () { if (isNpc) closeWindow(); else go({ name: 'home' }); } }, [isNpc ? '✕ Fenster schließen' : '← Zurück zum Job-Board']),
+      isNpc ? el('span') : el('button', { class: 'btn small ghost', onclick: function () { go({ name: 'home' }); } }, ['← Zurück zum Job-Board']),
       el('span', { class: 'spacer' }),
       el('button', { class: 'btn small' + (bookOpen ? ' active' : ' ghost'), 'aria-pressed': bookOpen ? 'true' : 'false', onclick: function () { State.s.bookOpen = !bookOpen; State.save(); render(true); } }, ['📖 Referenzbuch'])
     ]));
@@ -167,6 +181,11 @@
       ? 'Frage von ' + Quests.name(task.figure) + ' · ' + (task.subtopic || 'Wirtschaft') + ' · Belohnung ' + euro(Quests.rewardFor(task)) + ' · falsch: −' + euro(Quests.fineFor(task)) + ' und die Beziehung sinkt'
       : topicLabel(task.topic) + ' · ' + DLABEL[task.difficulty] + ' · Auftragswert ' + euro(payFor(task)) + ' · ' + timeFor(task) + ' Min.']));
 
+    var dl = !isNpc && State.s.acc[id] ? State.s.acc[id].due : null;
+    if (dl !== null && !done) {
+      var left = dl - State.abs();
+      wrap.appendChild(el('p', { class: 'sub deadline' + (left < 30 ? ' warn' : ''), id: 'deadline' }, [deadlineText(dl)]));
+    }
     var kalle = Characters.make(isNpc ? task.figure : 'kalle', { size: 62 }), bubble = el('div', { class: 'bubble' }, [isNpc ? 'Erinnerst du dich, was ich dir dazu erklärt habe? Schau in dein Notizbuch, wenn du es aufgeschrieben hast.' : LINES.intro[task.difficulty]]);
     wrap.appendChild(el('div', { class: 'card mentor compact', style: 'margin-bottom:14px;align-items:center;padding:8px 14px' }, [kalle, bubble]));
     wrap._mentor = { kalle: kalle, bubble: bubble };
@@ -178,7 +197,7 @@
       draft: draftMem[id], output: output,
       setDraft: function (v) { draftMem[id] = v; },
       feedback: function (kind, text) { output.appendChild(el('div', { class: 'msg ' + kind }, [text])); },
-      ran: function () { Fx.mood(kalle, 'thinking', 1600); },
+      ran: function () { Fx.mood(kalle, 'thinking', 1600); if (!isNpc && !done) { var nd = State.spendTime(RUN_COST); pullEvents(); if (WM && nd) State.s.dayOver = true; State.save(); renderStats(); refreshDeadline(task); } },
       rerender: function () { render(true); }
     });
     var btnSubmit = el('button', { class: 'btn green', onclick: function () { (isNpc ? submitNpc : submit)(task, plugin, ws.getAnswer()); } }, ['Abgeben']);
@@ -227,16 +246,17 @@
     var g = plugin.grade(task, answer);
     if (g.empty) { feedback = { kind: 'info', text: g.hint }; render(true); return; }
     if (g.ok) {
-      var pay = payFor(task);
-      State.s.money += pay; State.s.rep += REP[task.difficulty]; State.s.done[task.id] = true;
+      var acc = State.s.acc[task.id], late = !!acc && State.abs() + timeFor(task) > acc.due, pay = Math.round(payFor(task) * (late ? 0.5 : 1)), repGain = late ? -2 : REP[task.difficulty];
+      State.s.money += pay; State.s.rep = Math.max(0, State.s.rep + repGain); State.s.done[task.id] = true; delete State.s.acc[task.id];
       var newDay = State.spendTime(timeFor(task)); pullEvents(); if (WM && newDay) State.s.dayOver = true;
-      var text = '✔ Auftrag erledigt: +' + euro(pay) + ', +' + REP[task.difficulty] + ' Ruf.' + (newDay ? (WM ? ' Es ist Feierabend, schließ das Fenster und geh nach Hause.' : ' Ein neuer Tag beginnt, es gibt neue Aufträge.') : '');
+      Tutorial.event('task-done');
+      var text = (late ? '⚠ Zu spät abgegeben: nur halbes Honorar, Ruf ' + repGain + '. ✔ Auftrag erledigt: +' + euro(pay) + '.' : '✔ Auftrag erledigt: +' + euro(pay) + ', +' + REP[task.difficulty] + ' Ruf.') + (newDay ? (WM ? ' Es ist Feierabend, schließ das Fenster und geh nach Hause.' : ' Ein neuer Tag beginnt, es gibt neue Aufträge.') : '');
       var sol = plugin.solutionText ? plugin.solutionText(task) : '';
       pendingFx = { kind: 'ok', difficulty: task.difficulty }; if (newDay) newDayFlag = true;
       feedback = { kind: 'ok', text: text + (task.reflection ? '\n\nHintergrund: ' + task.reflection : '') + (sol ? '\n\nMusterlösung:\n' + sol : '') };
     } else {
       State.s.attempts[task.id] = (State.s.attempts[task.id] || 0) + 1;
-      var n = State.s.attempts[task.id];
+      var n = State.s.attempts[task.id], nd2 = State.spendTime(MISS_COST); pullEvents(); if (WM && nd2) State.s.dayOver = true;
       pendingFx = { kind: 'bad' };
       feedback = { kind: 'bad', text: '✘ Noch nicht richtig. ' + g.hint + (n >= 2 ? ' (Ab dem zweiten Fehlversuch sinkt der Auftragswert.)' : '') };
     }
@@ -248,12 +268,14 @@
     if (!fx) return;
     var m = node._mentor;
     if (fx.kind === 'ok') {
+      if (window.Sound) Sound.play('ok');
       var btn = document.querySelector('.btn.green') || document.body;
       if (m) { Fx.mood(m.kalle, 'happy', 2200); Fx.say(m.bubble, m.kalle, pick(LINES.ok)); }
       Fx.coins(btn, document.getElementById('stat-money'), 5 + fx.difficulty * 3);
       Fx.stars(btn, document.getElementById('stat-rep'), 2 + fx.difficulty);
       Fx.confetti(btn, 18 + fx.difficulty * 8);
     } else if (fx.kind === 'bad') {
+      if (window.Sound) Sound.play('bad');
       if (m) { Fx.mood(m.kalle, 'sad', 2400); Fx.say(m.bubble, m.kalle, pick(LINES.bad)); }
       Fx.shake(document.querySelector('.task .card:last-child'));
     }
@@ -273,7 +295,8 @@
   }
   function enterLocation(id, spawn) {
     State.s.loc = id; State.save(); showWindow(false);
-    return World.enter(id, spawn).then(function () { renderStats(); }, function (err) {
+    if (window.Sound) Sound.play('door');
+    return World.enter(id, spawn).then(function () { renderStats(); if (id === 'cafe') Tutorial.event('arrive-cafe'); }, function (err) {
       console.error('Ort konnte nicht aufgebaut werden:', id, err);
       if (id !== 'wohnung') { toast('bad', 'Dieser Ort ließ sich nicht laden. Du bist zurück in der Wohnung.'); return enterLocation('wohnung', 'default'); }
     });
@@ -315,7 +338,7 @@
   // Schnittstelle für die Orte (siehe world/CONTRACT.md)
   var api3d = {
     state: State, economy: Economy,
-    openMap: function () { mapSel = null; openWindow({ name: 'map' }); },
+    openMap: function () { mapSel = null; openWindow({ name: 'map' }); Tutorial.event('map-open'); },
     openHandbuch: function () { openWindow({ name: 'handbuch' }); },
     openNotebook: function () { openWindow({ name: 'notebook' }); },
     // Gespräch mit einer Figur: erst offene Frage, sonst neue Lektion, sonst normales Gespräch
@@ -327,7 +350,7 @@
     },
     openJobs: function () {
       if (!Economy.canWork(State.s)) { toast('bad', State.s.loc === 'cafe' ? 'Bestell dir erst einen Kaffee an der Theke, sonst wirft dich der Kellner raus.' : 'Hier kannst du nicht arbeiten.'); return; }
-      openWindow({ name: 'home' });
+      openWindow({ name: 'home' }); Tutorial.event('jobs-open');
     },
     openShop: function (tab) { openWindow({ name: 'shop', tab: tab || 'skills', only: true }); },
     talk: function (o) { talkCtx = o; openWindow({ name: 'talk' }); },
@@ -337,7 +360,7 @@
     buyCoffee: function () {
       var r = Economy.buyCoffee(State.s);
       if (!r.ok) { toast(Economy.hasCoffee(State.s) ? 'info' : 'bad', r.why); return r; }
-      State.save(); renderStats(); toast('ok', 'Kaffee gekauft: −' + euro(Economy.COFFEE_PRICE) + '. Jetzt darfst du am Tisch arbeiten.'); return r;
+      State.save(); renderStats(); Tutorial.event('coffee'); toast('ok', 'Kaffee gekauft: −' + euro(Economy.COFFEE_PRICE) + '. Jetzt darfst du am Tisch arbeiten.'); return r;
     },
     sleep: function () {
       var left = Economy.dayEnd(State.s) - State.s.minutes;
@@ -387,6 +410,7 @@
     if (WM) node.insertBefore(el('button', { class: 'btn small ghost wclose', onclick: closeWindow, 'aria-label': 'Fenster schließen' }, ['✕ Schließen (Esc)']), node.firstChild);
     var bn = bannerNodes(), anchor = node.firstChild;
     bn.forEach(function (b) { node.insertBefore(b, anchor); });
+    if (v.name === 'task' && key !== lastKey) { var tk = Tasks.get(v.id); if (tk && !tk.figure) Tutorial.event('task-open'); }
     if (key !== lastKey || WM) Fx.enter(node);
     lastKey = key;
     runPending(node);
@@ -406,6 +430,8 @@
   });
   var hudMap = document.getElementById('hud-map'); if (hudMap) hudMap.addEventListener('click', function () { if (WM && !winOpen) api3d.openMap(); });
   var hudNotes = document.getElementById('hud-notes'); if (hudNotes) hudNotes.addEventListener('click', function () { if (WM && !winOpen) api3d.openNotebook(); });
+  var hudSound = document.getElementById('hud-sound'); if (hudSound) { hudSound.textContent = Sound.isMuted() ? '🔇' : '🔊'; hudSound.addEventListener('click', function () { hudSound.textContent = Sound.toggle() ? '🔇' : '🔊'; Sound.play('click'); }); }
+  var hudHelp = document.getElementById('hud-help'); if (hudHelp) hudHelp.addEventListener('click', function () { Tutorial.start(); });
   var hudBook = document.getElementById('hud-book'); if (hudBook) hudBook.addEventListener('click', function () { if (WM && !winOpen) api3d.openHandbuch(); });
 
   // Start: alle Plugins initialisieren, Aufgaben einsammeln und prüfen, dann 3D-Welt (falls WebGL) oder 2D-Notlösung
@@ -427,7 +453,7 @@
     render();
     World.enter(start, 'default').then(function () {
       if (State.s.dayOver) dayOver('Feierabend! Du gehst nach Hause.');
-      else if (State.s.day === 1 && !Object.keys(State.s.done).length) toast('info', 'Willkommen! Geh zur Tür (E) und dann auf die Karte. Ohne Büro arbeitest du im Café.');
+      Tutorial.boot();
     });
   }, function (e) { app.textContent = 'Start fehlgeschlagen: ' + e; });
 })();

@@ -173,6 +173,15 @@
     return wrap;
   }
 
+  // Knopf zum passenden Handbuch-Eintrag (Eintrag trägt den Skill in `skill`)
+  function handbookLink(skillId, api) {
+    if (!window.Reference || !api.openHandbuch) return '';
+    var entry = null;
+    Reference.data().chapters.forEach(function (c) { c.entries.forEach(function (e) { if (!entry && e.skill === skillId) entry = e; }); });
+    if (!entry) return '';
+    return el('button', { class: 'btn small ghost', onclick: function () { closeModal(); Reference.state.tab = 'befehle'; Reference.state.entry = entry.id; Reference.state.taskKey = ''; api.openHandbuch(); } }, ['📖 Im Handbuch']);
+  }
+
   // ---------- Dialog: "Dafür brauchst du erst …" ----------
   var openModal = null;
   function closeModal() { if (openModal) { openModal.remove(); openModal = null; document.removeEventListener('keydown', onKey); } }
@@ -197,7 +206,7 @@
         box.appendChild(el('div', { class: 'card skillcard', style: 'margin-bottom:10px' }, [
           el('div', { class: 'row' }, [el('b', {}, [k.name]), el('span', { class: 'spacer' }), el('span', { class: 'badge d2' }, [euro(k.cost)])]),
           el('p', { class: 'sub', style: 'margin:6px 0' }, [k.desc]),
-          el('div', { class: 'row' }, [btn, (c.ok || !here) ? '' : el('span', { class: 'sub', style: 'font-size:13px;margin:0' }, [c.why])])
+          el('div', { class: 'row' }, [btn, (c.ok || !here) ? '' : el('span', { class: 'sub', style: 'font-size:13px;margin:0' }, [c.why]), handbookLink(id, api)])
         ]));
       });
       var row = el('div', { class: 'row', style: 'margin-top:12px' });

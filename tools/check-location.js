@@ -95,8 +95,8 @@ function checkOne(tier) {
   const calls = [];
   const rec = name => (...a) => { calls.push(name); return name === 'hasCoffee' || name === 'canWork' ? true : undefined; };
   const api = { state: ctx.State, economy: ctx.Economy };
-  ['openMap', 'openJobs', 'openShop', 'notify', 'sleep', 'buyCoffee', 'hasCoffee', 'canWork'].forEach(k => api[k] = rec(k));
-  api.talk = o => { calls.push('talk'); ok(!!o && !!o.figure && !!o.text, 'talk() bekommt figure und text'); (o.actions || []).forEach(a => { try { a.run(api); } catch (e) { ok(false, `Aktion "${a.label}" wirft: ${e.message}`); } }); };
+  ['openMap', 'openJobs', 'openShop', 'notify', 'sleep', 'buyCoffee', 'hasCoffee', 'canWork', 'openHandbuch', 'openNotebook'].forEach(k => api[k] = rec(k));
+  api.npcTalk = api.talk = o => { calls.push('talk'); ok(!!o && !!o.figure && !!o.text, 'talk() bekommt figure und text'); (o.actions || []).forEach(a => { try { a.run(api); } catch (e) { ok(false, `Aktion "${a.label}" wirft: ${e.message}`); } }); };
   b.interactables.forEach(it => { try { it.onUse(api); } catch (e) { ok(false, `onUse von "${it.id}" wirft: ${e.message}`); } });
   if (door) { const c0 = calls.length; door.onUse(api); ok(calls.slice(c0).includes('openMap'), '"tuer" ruft api.openMap() auf'); }
   ok(calls.length > 0, 'Interaktionen lösen Aktionen aus');

@@ -51,7 +51,15 @@ Start in schäbiger Wohnung. Jobs annehmen → Aufgabe lösen → Geld (je schwi
 - Umsetzung: Grundgerüst (Engine, Bausteine, Ortsschnittstelle) von Claude, die Orte von Sonnet-Agenten parallel, danach Review-Agenten auf Bugs. Siehe `game/js/world/` (Schnittstelle: `CONTRACT.md`, Prüfer: `node tools/check-location.js <ort.js>`).
 - **Stand:** Alle 8 Orte gebaut, geprüft und im Browser abgenommen (Wohnung in 4 Stufen, Café, Büro, Bank, Finanzamt, Autohaus, Makler, Lernzentrum). Kamera als „Puppenhaus“ (Wände zwischen Kamera und Figur blenden aus).
 - **Regeln:** Arbeiten nur im Café (Kaffee 4 € pro Tag) oder im gemieteten Büro (380 €/Woche + 250 € Einrichtung, Aufträge 10 % schneller). Skills kauft man im Lernzentrum, Wohnung und Büro beim Makler, Autos im Autohaus. Fällt beim Aufbau eines Ortes etwas aus, bleibt man im alten Ort.
-- **Noch offen in 3D:** Straßen/Außenwelt, NPC-Gespräche mit WiSo-Fragen und Notizbuch (aktuell nur kurze Sprüche), Tutorial/Handbuch, Ton.
+- **Umgesetzt danach:**
+  - **Referenzbuch** neben jeder Aufgabe (Umschalter „Referenzbuch“): Tab „Datenbank“ (Tabellen aufklappen, Spalten mit PK/FK, alle Zeilen), Tab „Befehle“ (Suche, Detailansicht mit Syntax, Beispielen, Stolperfallen, „In den Editor“). Als eigenes Handbuch-Fenster mit Taste H. Inhalte: `game/data/handbuch/*.js` (SQL, Modellierung/UML, Programmierung/Git, später Daten/Rechnen).
+  - **Figuren-Gedächtnis:** Figuren erklären Themen (Lektion), der Spieler übernimmt Sätze ins **Notizbuch** (Taste N, 8 Plätze, im Lernzentrum auf 14 und 22 erweiterbar). Tage später fragt die Figur (Frage-Fenster mit Notizbuch-Tab). Richtig: Geld (skaliert mit Beziehung) + Beziehung +6. Falsch: Nachzahlung + Beziehung −8. Liegengelassene Fragen kosten Beziehung. Daten: `game/data/kompass-mc/*.js` (aus den Kompass-Aufgaben umgewandelt).
+  - **Tutorial:** 8 Tipps am ersten Tag (Kalle), überspringbar, über „? Tipps“ wiederholbar.
+  - **Job-Fristen:** je Auftrag 90/150/240 Spielminuten; Ausführen kostet 3, Fehlversuch 10 Minuten; zu spät = halbes Honorar und −2 Ruf.
+  - **Aufgabentyp „Rechnen“:** 15 Generatoren × 4 Varianten (Skonto, Rabatt, Break-even, Amortisation, Übertragung, Bildspeicher, Subnetz, RAID, Verfügbarkeit, Strom, Stundensatz, Zinsen, Nutzwert, Mittelwert, Leasing) mit Rechenweg.
+  - **Ton:** kurze Geräusche aus Code, stummschaltbar.
+  - **Figuren 3D v2:** Gesicht mit Lidern, Nase, Lippen, Haare in Schichten, Kleidung mit Kragen/Sakko/Kapuze, Hände mit Fingern; blinzeln, atmen, schauen den Spieler an. Vorschau: `game/demo/figuren.html`.
+- **Bewusst noch nicht umgesetzt (eigene Vorhaben):** heidelab-Werkbänke mit eigenen Editoren und Prüflogik: ER-Modell (34), Normalisierung (28), UML-Diagramme (Use Case, Aktivität, Klasse, Sequenz, Zustand: 151), Python (146, braucht einen Interpreter im Browser), Algorithmen (13), Spring (12), KNN/Entscheidungsbaum/Git-Lerneinheiten, Exambuilder (1.628). Straßen/Außenwelt.
 
 ## Technik
 - Comic-Stil, Laptop/PC, Mockup in `mockup/` gilt als Stilvorlage (Layout wird ans neue Prinzip angepasst)

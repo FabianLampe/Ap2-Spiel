@@ -60,8 +60,10 @@ Props.npc(b, { figure: 'bank', x, z, ry, pose: 'stand' | 'sit', name: 'Herr Zins
 |---|---|
 | `api.openMap()` | Karte zum Reisen |
 | `api.openJobs()` | Job-Board am Laptop; prüft selbst, ob hier gearbeitet werden darf (Café: Kaffee nötig, Büro: angemietet) |
-| `api.openShop(tab)` | Shop-Fenster: `'skills'`, `'home'`, `'car'`, `'office'`, `'finance'` |
-| `api.talk({ figure, name, text, actions })` | Gesprächsfenster mit 2D-Figur (`figure` wie bei `Props.npc`), `actions: [{ label, run(api) }]` |
+| `api.openShop(tab)` | Shop-Fenster: `'skills'`, `'notes'` (Notizbuch erweitern), `'home'`, `'car'`, `'office'`, `'finance'` |
+| `api.npcTalk({ figure, name, text, actions })` | Gespräch mit einer Figur (`figure` wie bei `Props.npc`). Hat die Figur eine offene Frage oder eine neue Lektion, startet die; sonst erscheint das Gesprächsfenster mit `text` und `actions: [{ label, run(api) }]`. **Für alle NPC-Gespräche verwenden.** |
+| `api.talk(...)` | Wie npcTalk, aber immer das normale Gesprächsfenster (für Nicht-Figuren wie den Spieler selbst) |
+| `api.openHandbuch()`, `api.openNotebook()` | Handbuch, Notizbuch |
 | `api.notify(kind, text)` | Meldung, `kind`: `'ok'`, `'bad'`, `'info'` |
 | `api.sleep()` | Tag beenden, nächster Morgen in der Wohnung |
 | `api.buyCoffee()` | Kaffee für 4 € kaufen (Café) |

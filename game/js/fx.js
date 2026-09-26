@@ -59,7 +59,7 @@
     // Münzen fliegen von 'from' zur Geldanzeige
     coins: function (from, to, n) {
       if (reduced() || !from || !to) return;
-      var a = center(from), b = center(to), L = getLayer(); n = n || 8;
+      var a = center(from), b = center(to), L = getLayer(); n = n || 8; if (window.Sound) Sound.play('coin');
       for (var i = 0; i < n; i++) {
         var p = document.createElement('div'); p.className = 'fx-piece fx-coin'; p.textContent = '€'; L.appendChild(p);
         fly(p, a, b, { dx: (Math.random() - .5) * 160, dy: -40 - Math.random() * 70, duration: 900 + Math.random() * 300, delay: i * 55, done: i === n - 1 ? function () { Fx.pulse(to); } : null });

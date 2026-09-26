@@ -1,0 +1,17 @@
+abhaengige-und-unabhaengige-variablen
+accuracy
+algorithmen-und-programmierung
+algorithmusentwurf
+arithmetisches-mittel
+compiler-und-interpretersprachen
+datenaufbereitung
+datenbankanomalien
+datenbankindizes
+datenbanknormalisierung
+datenbereinigung
+datenformate-fuer-datenaustausch
+datenredundanz
+datenvalidierung-und-verifizierung
+dimensionales-datenmodell
+entropie
+erwartungswert

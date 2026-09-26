@@ -115,7 +115,7 @@
     if (opts.only) tabs = tabs.filter(function (t) { return t.id === opts.only; });
     // Beim ersten Öffnen für eine neue Aufgabe mit dem aufgabenspezifischen Tab (z. B. Datenbank) beginnen
     var taskKey = opts.task ? opts.task.id : '';
-    if (ui.taskKey !== taskKey) { ui.taskKey = taskKey; ui.tab = tabs[0].id; ui.entry = null; }
+    if (ui.taskKey !== taskKey) { var keep = ui.entry; ui.taskKey = taskKey; ui.tab = tabs[0].id; ui.entry = taskKey ? null : keep; }
     if (!tabs.some(function (t) { return t.id === ui.tab; })) ui.tab = tabs[0].id;
 
     function draw() {

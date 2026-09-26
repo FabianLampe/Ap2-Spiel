@@ -105,3 +105,9 @@ details.dbtable .tablewrap{max-height:240px;margin-top:6px}
 .meter-fill{height:100%;background:var(--teal)}
 .note{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;border:2px solid var(--line);border-radius:10px;background:var(--surface);padding:6px 10px;margin-bottom:6px}
 .lesson-line{align-items:center}
+
+/* ---------- Tutorial ---------- */
+.coach{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);width:min(720px,calc(100vw - 32px));display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:2px solid var(--ink);border-radius:16px;box-shadow:0 5px 0 var(--ink);padding:10px 16px;z-index:45;animation:v-enter .3s ease-out}
+.coach-text{flex:1;font-size:15px}
+.deadline{font-weight:700;margin:-8px 0 12px}
+.deadline.warn{color:var(--danger)}

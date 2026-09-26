@@ -95,7 +95,7 @@
         var key = l.concept + '#' + i, btn;
         function label() { btn.textContent = Q.hasNote(key) ? '✔ Notiert' : '✎ Notieren'; }
         btn = el('button', { class: 'btn small ' + (Q.hasNote(key) ? 'green' : ''), onclick: function () {
-          if (Q.hasNote(key)) { Q.removeNote(key); } else { var r = Q.addNote(key, text, l.figure, l.title); if (!r.ok) ctx.api.toast('info', r.why); }
+          if (Q.hasNote(key)) { Q.removeNote(key); } else { var r = Q.addNote(key, text, l.figure, l.title); if (!r.ok) ctx.api.toast('info', r.why); else if (window.Sound) Sound.play('note'); }
           State.save(); label(); btn.className = 'btn small ' + (Q.hasNote(key) ? 'green' : ''); cap.textContent = 'Notizbuch: ' + S().notes.length + ' von ' + Q.cap() + ' Plätzen belegt.';
         } }, ['']);
         label();

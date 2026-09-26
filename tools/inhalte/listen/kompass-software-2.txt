@@ -1,0 +1,17 @@
+factory-method-entwurfsmuster
+generische-programmierung
+http-anfragen
+http-methoden
+http-statuscodes
+id3
+informationsgewinn
+json-datenformat
+ki
+klassengrenzen-und-klassenbildung
+klassifikation
+knn
+knn-k-wahl
+lineare-regression
+minimum-und-maximum
+nosql-datenbanken
+observer-entwurfsmuster

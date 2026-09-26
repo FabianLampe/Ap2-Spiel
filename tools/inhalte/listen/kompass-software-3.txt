@@ -1,0 +1,17 @@
+polymorphie
+primaer-und-fremdschluessel
+programmfehleranalyse-und-debugging
+programmiersprachen-und-programmierparadigmen
+regressionskoeffizienten
+regressionsmodellbewertung
+regressionsmodellverbesserung
+regressionsprognose
+relationale-und-nichtrelationale-datenbankmodelle
+relative-haeufigkeiten-und-prozentanteile
+rest-api
+rest-architekturbeschraenkungen
+schreibtischtest
+softwarearchitektur-und-entwurfsmuster
+softwaretests
+sql
+sql-abfragen
