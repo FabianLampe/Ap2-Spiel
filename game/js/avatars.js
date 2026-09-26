@@ -1,17 +1,28 @@
-// Spielerfiguren zur Auswahl: 3 männlich, 3 weiblich. Werden als 3D-Figuren ('spieler-<id>') und als 2D-Figur (Dialoge) genutzt.
+// Spielerfiguren zur Auswahl: 4 männlich, 4 weiblich, jede mit eigenem Stil. Werden als 3D-Figuren ('spieler-<id>') und als 2D-Figur (Dialoge) genutzt.
 (function () {
   var LIST = [
-    { id: 'm1', gender: 'm', name: 'Ben',    look: { skin: 0xf0c29c, hair: 0x4a3020, hairStyle: 'short',  shirt: 0xd4491a, pants: 0x2f3b4d, shoes: 0x2a2a2a, hoodie: true, build: 'normal', height: 1.78 } },
-    { id: 'm2', gender: 'm', name: 'Malik',  look: { skin: 0xa8704c, hair: 0x1a1512, hairStyle: 'short',  shirt: 0x2f8f8a, pants: 0x3a3f4a, shoes: 0xe8e8e8, beard: true, build: 'normal', height: 1.82 } },
-    { id: 'm3', gender: 'm', name: 'Jonas',  look: { skin: 0xf3d3b5, hair: 0xc9a55a, hairStyle: 'slick',  shirt: 0x7a8899, pants: 0x3b4a5a, shoes: 0x2a2320, glasses: true, build: 'slim', height: 1.80 } },
-    { id: 'f1', gender: 'f', name: 'Mia',    look: { skin: 0xf0c4a4, hair: 0x5a3a26, hairStyle: 'ponytail', shirt: 0xe4706a, pants: 0x3a4a6a, shoes: 0x2b2b2b, female: true, build: 'slim', height: 1.68 } },
-    { id: 'f2', gender: 'f', name: 'Aylin',  look: { skin: 0xd6a67e, hair: 0x14100e, hairStyle: 'bob',    shirt: 0x6b8f4e, pants: 0x2f2f38, shoes: 0x2a2a2a, female: true, build: 'normal', height: 1.70 } },
-    { id: 'f3', gender: 'f', name: 'Sophie', look: { skin: 0xf5d2b8, hair: 0xc0451f, hairStyle: 'bob',    shirt: 0x556b3a, pants: 0x5a3b26, shoes: 0x2a2a2a, glasses: true, female: true, build: 'slim', height: 1.72 } }
+    { id: 'm1', gender: 'm', name: 'Leon',   style: 'Streetwear',
+      look: { skin: 0xf0c29c, hair: 0x5a3a24, hairStyle: 'quiff', shirt: 0x4a5560, pants: 0x3c5a80, shoes: 0xf2f2f2, sole: 0xf2f2f2, hoodie: true, watch: 0x1c1c1c, build: 'slim', height: 1.82, eye: 0x5a7a4a } },
+    { id: 'm2', gender: 'm', name: 'Malik',  style: 'Sommer-Tattoo',
+      skin2D: '#9a6444', look: { skin: 0x4a2a18, hair: 0x14100e, hairStyle: 'buzz', shirt: 0xe8e4da, tshirt: true, sleeves: 'short', pants: 0x6b6a4a, shorts: true, shoes: 0x1c1c1c, sole: 0xeeeeee, shoeStyle: 'hightop', socks: 0xf2f2f2, beard: true, tattoo: 0x2a1c18, watch: 0xb89a5a, build: 'normal', height: 1.84, eye: 0x3a2618 } },
+    { id: 'm3', gender: 'm', name: 'Jonas',  style: 'Business casual',
+      look: { skin: 0xf3d3b5, hair: 0xc9a55a, hairStyle: 'slick', shirt: 0xf2f4f8, jacket: 0x3a4a64, pants: 0x2a2f3a, shoes: 0x5a3420, belt: true, glasses: true, glassesColor: 0x2a2a2a, build: 'slim', height: 1.80, eye: 0x4a6a8a } },
+    { id: 'm4', gender: 'm', name: 'Tarek',  style: 'Entspannt mit Dutt',
+      look: { skin: 0xd6a67e, hair: 0x2a1a12, hairStyle: 'manbun', shirt: 0xb4432e, tshirt: true, sleeves: 'short', pants: 0x2a2d33, shoes: 0x8a5a36, sole: 0x3a2a20, shoeStyle: 'hightop', beard: true, bracelet: 0x9a9a9a, watch: 0x3a2a20, build: 'normal', height: 1.78, eye: 0x4a3020 } },
+    { id: 'f1', gender: 'f', name: 'Sophie', style: 'Vintage mit Locken',
+      look: { skin: 0xf5d2b8, hair: 0xb8401c, hairStyle: 'curly', shirt: 0x55643a, tshirt: true, sleeves: 'short', pants: 0x5a3b26, shorts: true, shoes: 0x2a2424, sole: 0xe6e6e0, shoeStyle: 'hightop', socks: 0xe0a820, glasses: true, glassesStyle: 'cateye', glassesColor: 0xe8ddd4, tattoo: 0x9a4a38, watch: 0x5a3a2a, female: true, build: 'slim', height: 1.72, eye: 0x6a8a8a } },
+    { id: 'f2', gender: 'f', name: 'Aylin',  style: 'Elegant',
+      look: { skin: 0xdcae86, hair: 0x14100e, hairStyle: 'long', shirt: 0xf4efe8, jacket: 0x7a2a3a, pants: 0x2a2a30, skirt: true, shoes: 0x1a1a1a, bracelet: 0xd4b060, female: true, build: 'slim', height: 1.70, eye: 0x4a3020 } },
+    { id: 'f3', gender: 'f', name: 'Mia',    style: 'Sportlich',
+      look: { skin: 0xf0c4a4, hair: 0xd8b878, hairStyle: 'ponytail', shirt: 0x6fa8c8, hoodie: true, pants: 0x2f3440, shoes: 0xf2f2f2, sole: 0xf2f2f2, watch: 0xf0f0f0, female: true, build: 'slim', height: 1.67, eye: 0x4a6a9a } },
+    { id: 'f4', gender: 'f', name: 'Nala',   style: 'Bunt mit Afro',
+      skin2D: '#7e5036', look: { skin: 0x3a1f12, hair: 0x1a1210, hairStyle: 'afro', shirt: 0xf2c230, tshirt: true, sleeves: 'short', pants: 0x3c5a80, shoes: 0xd84a3a, sole: 0xf2f2f2, shoeStyle: 'hightop', bracelet: 0xd4b060, female: true, build: 'normal', height: 1.69, eye: 0x3a2618 } }
   ];
   var by = {}; LIST.forEach(function (a) { by[a.id] = a; if (window.Humans) Humans.PRESETS['spieler-' + a.id] = a.look; });
 
+  // 3D-Farben gelten linear; für sehr dunkle Hauttöne gibt es deshalb einen eigenen 2D-Wert (skin2D)
   function css(n) { return '#' + ('000000' + n.toString(16)).slice(-6); }
-  var HAIR2D = { short: 'short', slick: 'slick', bob: 'bob', ponytail: 'bun', bald: 'bald', beanie: 'beanie' };
+  var HAIR2D = { short: 'short', slick: 'slick', bob: 'bob', ponytail: 'bun', bald: 'bald', beanie: 'beanie', curly: 'curly', afro: 'afro', long: 'long', manbun: 'bun', quiff: 'short', buzz: 'buzz' };
 
   window.Avatars = {
     list: LIST,
@@ -20,7 +31,7 @@
     // Konfiguration für die 2D-Figur (Dialoge, Karten)
     figure2D: function (id) {
       var a = Avatars.get(id), l = a.look;
-      return { name: a.name, skin: css(l.skin), hair: css(l.hair), hairStyle: HAIR2D[l.hairStyle] || 'short', shirt: css(l.shirt), extra: l.hoodie ? 'hoodie' : 'none', glasses: !!l.glasses, mustache: !!l.beard, delay: 0 };
+      return { name: a.name, skin: a.skin2D || css(l.skin), hair: css(l.hair), hairStyle: HAIR2D[l.hairStyle] || 'short', shirt: css(l.jacket || l.shirt), extra: l.hoodie ? 'hoodie' : 'none', glasses: !!l.glasses, mustache: !!l.beard, delay: 0 };
     }
   };
 })();

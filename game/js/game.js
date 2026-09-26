@@ -284,7 +284,7 @@
   // ---------- 3D-Welt: Fenster, Karte, Gespräche, Reisen ----------
   function showWindow(on) {
     winOpen = !!on; document.body.classList.toggle('win-open', winOpen);
-    if (WM) World.setPaused(winOpen);
+    if (WM) World.setPaused(winOpen || Menu.isOpen());
   }
   function openWindow(view) { if (!WM) { go(view); return; } State.s.view = view; feedback = null; showWindow(true); render(); }
   function closeWindow() {
@@ -452,13 +452,13 @@
         hasSave: State.hasSave(),
         onContinue: function () { Menu.close(); },
         onNew: function (o) {
-          State.reset(); var s = State.s; s.avatar = o.avatar; s.pname = o.name; s.difficulty = o.difficulty; s.money = Economy.DIFF[o.difficulty].start; s.started = true; State.save(); location.reload();
+          State.reset(); var s = State.s; s.avatar = o.avatar; s.pname = o.name; s.difficulty = o.difficulty; s.money = Economy.DIFF[o.difficulty].start; s.started = true; State.save(); Menu.reloadIntoGame();
         }
       };
     }
     function applyAvatar() { Characters.setPlayer(Avatars.figure2D(State.s.avatar)); World.setAvatar(Avatars.presetName(State.s.avatar)); }
     applyAvatar();
-    if (!State.s.started && !State.hasSave()) Menu.showStart(startOpts());
+    if (!Menu.consumeSkip() || (!State.s.started && !State.hasSave())) Menu.showTitle(startOpts());
     var openPause = function () { if (winOpen || Menu.isOpen() || document.querySelector('.modal-back')) return; Menu.showPause({ startOpts: startOpts }); };
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !winOpen && !Menu.isOpen() && !document.querySelector('.modal-back')) { openPause(); e.preventDefault(); } else if (e.key === 'Escape' && Menu.isOpen() && document.getElementById('menu-pause')) { Menu.close(); } });
     var hm = document.getElementById('hud-menu'); if (hm) hm.addEventListener('click', openPause);
@@ -467,6 +467,7 @@
     State.s.loc = start; State.s.view = { name: 'home' };
     render();
     World.enter(start, 'default').then(function () {
+      if (Menu.isOpen()) World.setPaused(true);
       if (State.s.dayOver) dayOver('Feierabend! Du gehst nach Hause.');
       Tutorial.boot();
     });

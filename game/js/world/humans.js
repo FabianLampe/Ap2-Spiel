@@ -44,6 +44,23 @@
     var t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; return t;
   }
 
+  // Haut mit Tattoo-Motiven (Wellen und Wolken) für einen Arm; u läuft um den Arm herum, v von unten nach oben
+  function tattooTexture(hex, ink) {
+    if (typeof document === 'undefined') return null;
+    var cv = document.createElement('canvas'); cv.width = cv.height = 128; var c = cv.getContext('2d'); if (!c) return null;
+    var col = new THREE.Color(hex).convertLinearToSRGB();
+    c.fillStyle = 'rgb(' + Math.round(col.r * 255) + ',' + Math.round(col.g * 255) + ',' + Math.round(col.b * 255) + ')'; c.fillRect(0, 0, 128, 128);
+    var ic = new THREE.Color(ink).convertLinearToSRGB(), rgb = Math.round(ic.r * 255) + ',' + Math.round(ic.g * 255) + ',' + Math.round(ic.b * 255);
+    c.strokeStyle = 'rgba(' + rgb + ',0.95)'; c.fillStyle = 'rgba(' + rgb + ',0.5)'; c.lineWidth = 3.6; c.lineCap = 'round';
+    // Motive vorne-außen (u ≈ 0,05 … 0,35)
+    [[24, 18], [30, 62], [22, 102]].forEach(function (p, i) {
+      for (var w = 0; w < 3; w++) { c.beginPath(); c.arc(p[0], p[1] + w * 6, 14 - w * 4, Math.PI, 2 * Math.PI); c.stroke(); }
+      c.beginPath(); c.moveTo(p[0] - 20, p[1] + 18); c.bezierCurveTo(p[0] - 8, p[1] + 8, p[0] + 10, p[1] + 26, p[0] + 26, p[1] + 12); c.stroke();
+      if (i === 1) { c.beginPath(); c.ellipse(p[0] + 8, p[1] - 16, 16, 6, 0, 0, 2 * Math.PI); c.fill(); c.stroke(); }
+    });
+    var t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; return t;
+  }
+
   // Drehfläche mit elliptischem Querschnitt (Rumpf, Kleidung): pts = [[radius, höhe], …]
   function lathe(pts, mat, sx, sz, seg) {
     var g = new THREE.LatheGeometry(pts.map(function (p) { return new THREE.Vector2(p[0], p[1]); }), seg || 28);
@@ -75,7 +92,7 @@
       var v = sh(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.34, 0.02), shirt)); at(v, 0, HIP + 0.4, 0.128 * (belly ? 1.1 : 1)); body.add(v);
       [-1, 1].forEach(function (s) { var l = sh(new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.02), outer)); at(l, s * 0.06, HIP + 0.4, 0.14); l.rotation.z = -s * 0.28; body.add(l); });
       for (var b = 0; b < 2; b++) { var bt = ball(0.008, std(0x222222, 0.4, 0.4), 8, 6); at(bt, 0.0, HIP + 0.3 - b * 0.1, 0.152); body.add(bt); }
-    } else if (!cfg.hoodie) {   // Hemd: Knopfleiste
+    } else if (!cfg.hoodie && !cfg.tshirt) {   // Hemd: Knopfleiste
       for (var k = 0; k < 4; k++) { var kn = ball(0.007, std(0xf5f5f5, 0.4), 8, 6); at(kn, 0, HIP + 0.5 - k * 0.1, 0.134 * (stout ? 1.15 : 1)); body.add(kn); }
     }
     if (cfg.vest && !cfg.jacket) { var vest = lathe(prof.map(function (p) { return [p[0] * 1.06, p[1]]; }), outer, W, 0.74); at(vest, 0, HIP - 0.008, 0); vest.scale.y = 0.86; body.add(vest); }
@@ -100,7 +117,7 @@
         var crease = sh(sc(ball(0.036, topMat, 10, 6), 1.5, 0.10, 0.22));
         at(crease, s * 0.09, HIP + 0.12 + fold * 0.07, 0.106 + belly * 0.4); crease.rotation.z = s * 0.2; body.add(crease);
       }
-      if (!cfg.hoodie) {
+      if (!cfg.hoodie && !cfg.tshirt) {
         var collarTip = sh(new THREE.Mesh(new THREE.ConeGeometry(0.033, 0.068, 3), shirt));
         collarTip.scale.z = 0.24; collarTip.rotation.z = Math.PI + s * 0.35;
         at(collarTip, s * 0.043, 1.492, 0.087); body.add(collarTip);
@@ -108,12 +125,12 @@
     });
 
     // ----- Hüfte / Hose / Rock -----
-    if (cfg.skirt) { var sk = lathe([[0.15, 0.0], [0.19, -0.2], [0.2, -0.26], [0.001, -0.26]], pants, W * 0.98, 0.8); at(sk, 0, HIP + 0.02, 0); body.add(sk); }
-    else { var hips = lathe([[0.001, -0.06], [0.165, -0.04], [0.17, 0.05], [0.158, 0.11], [0.001, 0.13]], pants, W * 1.02, 0.78); at(hips, 0, HIP, 0); body.add(hips); }
+    if (cfg.skirt) { var skirtMat = std(cfg.pants, 0.9); skirtMat.side = THREE.DoubleSide; var sk = lathe([[0.15, 0.0], [0.19, -0.2], [0.2, -0.26], [0.001, -0.26]], skirtMat, W * 0.98, 0.8); at(sk, 0, HIP + 0.02, 0); body.add(sk); }
+    else { var hips = lathe([[0.001, -0.06], [0.16, -0.04], [0.164, 0.04], [0.158, 0.1], [0.001, 0.12]], pants, W * 1.02, 0.73); at(hips, 0, HIP, 0); body.add(hips); }
 
     // ----- Hals und Kragen -----
     var neck = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.041, 0.054, 0.115, 16), skin)); at(neck, 0, 1.53, 0.006); body.add(neck);
-    if (!cfg.hoodie) { var collar = sh(new THREE.Mesh(new THREE.TorusGeometry(0.058, 0.014, 8, 20), shirt)); collar.rotation.x = Math.PI / 2; at(collar, 0, 1.505, 0.006); body.add(collar); }
+    if (!cfg.hoodie) { var collar = sh(new THREE.Mesh(new THREE.TorusGeometry(0.058, cfg.tshirt ? 0.009 : 0.014, 8, 20), shirt)); collar.rotation.x = Math.PI / 2; at(collar, 0, 1.505, 0.006); body.add(collar); }
 
     // ----- Kopf -----
     var head = new THREE.Group(); head.position.set(0, 1.69, 0.01); body.add(head);
@@ -142,9 +159,15 @@
       lidPivot.rotation.x = -1.8;           // offen
       lids.push(lidPivot); eyes.push(g);
       var brow = sh(new THREE.Mesh(new THREE.CapsuleGeometry(0.0035, 0.031, 4, 8), hair)); brow.rotation.z = Math.PI / 2 + s * -0.12; at(brow, s * 0.038, 0.048, 0.096); head.add(brow); brows.push(brow);
-      if (cfg.glasses) { var gl = new THREE.Mesh(new THREE.TorusGeometry(0.029, 0.0028, 6, 20), std(0x1a1a1a, 0.35, 0.3)); at(gl, s * 0.038, 0.02, 0.108); head.add(gl); var lens = new THREE.Mesh(new THREE.CircleGeometry(0.028, 16), new THREE.MeshStandardMaterial({ color: 0xcfe6f5, transparent: true, opacity: 0.16, roughness: 0.05 })); at(lens, s * 0.038, 0.02, 0.1085); head.add(lens); var arm = sh(new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.003, 0.1), std(0x1a1a1a, 0.35))); at(arm, s * 0.098, 0.02, 0.05); head.add(arm); }
+      if (cfg.glasses && cfg.glassesStyle === 'cateye') {   // Katzenaugen-Brille: breiter, flacher Rahmen mit spitzen Ecken
+        var fm = std(cfg.glassesColor || 0x1a1a1a, 0.3, 0.1);
+        var ce = new THREE.Mesh(new THREE.TorusGeometry(0.026, 0.0042, 6, 24), fm); sc(ce, 1.25, 0.82, 1); ce.rotation.z = s * 0.12; at(ce, s * 0.039, 0.021, 0.108); head.add(ce);
+        var wing = sh(new THREE.Mesh(new THREE.ConeGeometry(0.009, 0.024, 4), fm)); wing.rotation.z = -s * 1.1; at(wing, s * 0.071, 0.036, 0.104); head.add(wing);
+        var lens2 = new THREE.Mesh(new THREE.CircleGeometry(0.026, 18), new THREE.MeshStandardMaterial({ color: 0xdfeef8, transparent: true, opacity: 0.14, roughness: 0.05 })); sc(lens2, 1.25, 0.82, 1); at(lens2, s * 0.039, 0.021, 0.1085); head.add(lens2);
+        var arm2 = sh(new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.004, 0.1), fm)); at(arm2, s * 0.099, 0.026, 0.05); head.add(arm2);
+      } else if (cfg.glasses) { var gl = new THREE.Mesh(new THREE.TorusGeometry(0.029, 0.0028, 6, 20), std(cfg.glassesColor || 0x1a1a1a, 0.35, 0.3)); at(gl, s * 0.038, 0.02, 0.108); head.add(gl); var lens = new THREE.Mesh(new THREE.CircleGeometry(0.028, 16), new THREE.MeshStandardMaterial({ color: 0xcfe6f5, transparent: true, opacity: 0.16, roughness: 0.05 })); at(lens, s * 0.038, 0.02, 0.1085); head.add(lens); var arm = sh(new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.003, 0.1), std(0x1a1a1a, 0.35))); at(arm, s * 0.098, 0.02, 0.05); head.add(arm); }
     });
-    if (cfg.glasses) { var br = sh(new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.003, 0.003), std(0x1a1a1a, 0.35))); at(br, 0, 0.026, 0.108); head.add(br); }
+    if (cfg.glasses) { var br = sh(new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.003, 0.003), std(cfg.glassesColor || 0x1a1a1a, 0.35))); at(br, 0, 0.026, 0.108); head.add(br); }
     // Mund: Lippen + dunkler Mundraum (Öffnung beim Sprechen)
     var lipMat = std(new THREE.Color(cfg.skin).lerp(new THREE.Color(female ? 0xb8505a : 0xa85a52), 0.55).getHex(), 0.5);
     var mouth = new THREE.Group(); at(mouth, 0, -0.058, 0.098); head.add(mouth);
@@ -177,8 +200,52 @@
       [-1, 1].forEach(function (s) { var sb = sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 6), hair), 0.6, 1.2, 1.1)); at(sb, s * 0.098, 0.0, 0.0); head.add(sb); });
       var fringe = sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), hair), 1.3, 0.4, 0.6)); at(fringe, 0, 0.066, 0.084); head.add(fringe);
     }
+    // Locken und Afro: viele kleine Kugeln auf einer Schale um den Kopf (fester Zufall, damit jede Figur gleich aussieht)
+    function curls(rows, rad, seed, hairB) {
+      function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+      rows.forEach(function (row) {
+        var y = row[0], r = row[1], open = row[2], n = row[3];
+        for (var i = 0; i < n; i++) {
+          var phi = open + (i + 0.5 + (rnd() - 0.5) * 0.4) / n * (Math.PI * 2 - 2 * open);
+          var cr = rad * (0.8 + rnd() * 0.45), c = ball(cr, rnd() < 0.3 ? hairB : hair, 10, 8);
+          at(c, Math.sin(phi) * r * 0.97, y + (rnd() - 0.5) * 0.012, Math.cos(phi) * r - 0.012); head.add(c);
+        }
+      });
+    }
+    if (style === 'curly' || style === 'afro' || style === 'long' || style === 'manbun' || style === 'quiff' || style === 'buzz') {
+      var hairB = std(new THREE.Color(cfg.hair).lerp(new THREE.Color(0xffd0a0), 0.18).getHex(), 0.75);
+      if (style === 'curly') {       // schulterlange Locken mit Mittelscheitel
+        head.add(cap(0.116, 0.01, -0.006, -0.78));
+        curls([[0.105, 0.075, 0.0, 10], [0.075, 0.108, 0.35, 16], [0.035, 0.125, 1.05, 16], [-0.01, 0.132, 1.2, 16], [-0.055, 0.138, 1.25, 16], [-0.1, 0.142, 1.3, 16], [-0.145, 0.145, 1.35, 15], [-0.19, 0.14, 1.45, 13], [-0.23, 0.125, 1.6, 10]], 0.032, 11, hairB);
+      }
+      if (style === 'afro') {        // runder Afro
+        var af = sh(sc(ball(0.15, hair, 22, 16), 1.08, 0.92, 0.9)); at(af, 0, 0.08, -0.06); head.add(af);
+        curls([[0.19, 0.06, 0.0, 9], [0.15, 0.12, 0.0, 16], [0.1, 0.15, 0.55, 16], [0.05, 0.16, 1.05, 14], [0.0, 0.16, 1.25, 12], [-0.04, 0.14, 1.4, 10]], 0.034, 23, hairB);
+      }
+      if (style === 'long') {        // lange glatte Haare über die Schultern
+        head.add(cap(0.116, 0.008, -0.006, -0.8));
+        var backL = sh(sc(new THREE.Mesh(new THREE.CapsuleGeometry(0.1, 0.2, 6, 16), hair), 1.05, 1, 0.55)); at(backL, 0, -0.12, -0.06); head.add(backL);
+        [-1, 1].forEach(function (s) { var sd = sh(sc(new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.24, 6, 12), hair), 0.8, 1, 0.9)); at(sd, s * 0.092, -0.1, 0.02); sd.rotation.z = s * 0.06; head.add(sd); });
+        var fringeL = sh(sc(ball(0.06, hair, 14, 8), 1.5, 0.45, 0.8)); at(fringeL, -0.02, 0.088, 0.075); fringeL.rotation.z = 0.25; head.add(fringeL);
+      }
+      if (style === 'manbun') {      // nach hinten, Dutt oben
+        head.add(cap(0.114, 0.008, -0.006, -0.95));
+        var mb = ball(0.042, hair, 14, 10); at(mb, 0, 0.12, -0.075); head.add(mb);
+        var tie = sh(new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.006, 6, 14), std(0x222222, 0.5))); tie.rotation.x = 1.1; at(tie, 0, 0.1, -0.06); head.add(tie);
+        [-1, 1].forEach(function (s) { var sb = sh(sc(ball(0.028, hair, 8, 6), 0.55, 1.2, 1.2)); at(sb, s * 0.099, 0.025, -0.008); head.add(sb); });
+      }
+      if (style === 'quiff') {       // kurze Seiten, Tolle vorne
+        head.add(cap(0.116, 0.004, -0.006, -0.9));
+        var qf = sh(sc(ball(0.045, hair, 14, 10), 1.5, 0.6, 1.1)); at(qf, 0.005, 0.1, 0.055); qf.rotation.x = -0.5; head.add(qf);
+        [-1, 1].forEach(function (s) { var sb = sh(sc(ball(0.028, hair, 8, 6), 0.5, 1.1, 1.2)); at(sb, s * 0.098, 0.02, -0.008); head.add(sb); });
+      }
+      if (style === 'buzz') {        // sehr kurz geschoren
+        var bz = cap(0.1165, 0.0, -0.004, -0.95); head.add(bz);
+        [-1, 1].forEach(function (s) { var sb = sh(sc(ball(0.027, hair, 8, 6), 0.45, 1.1, 1.2)); at(sb, s * 0.097, 0.02, -0.008); head.add(sb); });
+      }
+    }
     // Flache, überlappende Strähnen folgen der Kopfkrümmung; keine einzelnen Haar-Meshes.
-    if (style !== 'bald' && style !== 'beanie') {
+    if (style !== 'bald' && style !== 'beanie' && style !== 'curly' && style !== 'afro' && style !== 'buzz' && style !== 'quiff') {
       var hairLight = std(new THREE.Color(cfg.hair).lerp(new THREE.Color(0xb9a18b), 0.14).getHex(), 0.8);
       for (var strand = 0; strand < 7; strand++) {
         var sx = (strand - 3) * 0.023;
@@ -192,14 +259,28 @@
     var upperLen = 0.30, foreLen = 0.26;
     var arms = [-1, 1].map(function (s) {
       var pivot = new THREE.Group(); pivot.position.set(s * (female ? 0.18 : 0.215) * (slim ? 0.95 : 1), 1.46, 0); body.add(pivot);
-      pivot.add(sh(ball(0.06, sleeveMat, 12, 10)));                                              // Schulterkappe
-      var upper = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.045, upperLen, 14), sleeveMat)); at(upper, 0, -upperLen / 2, 0); pivot.add(upper);
+      var shortSl = cfg.sleeves === 'short' && !cfg.jacket;
+      var armSkin = skin;
+      if (shortSl && cfg.tattoo && s === (cfg.tattooSide || 1)) { var tt = tattooTexture(cfg.skin, cfg.tattoo); if (tt) { armSkin = new THREE.MeshStandardMaterial({ map: tt, roughness: 0.72 }); } }
+      pivot.add(sh(ball(shortSl ? 0.05 : 0.06, sleeveMat, 12, 10)));                             // Schulterkappe
+      if (shortSl) {   // T-Shirt-Ärmel mit umgeschlagenem Saum, darunter Haut
+        var slv = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.05, 0.12, 14), sleeveMat)); at(slv, 0, -0.06, 0); pivot.add(slv);
+        var roll = sh(new THREE.Mesh(new THREE.TorusGeometry(0.049, 0.008, 6, 16), sleeveMat)); roll.rotation.x = Math.PI / 2; at(roll, 0, -0.117, 0); pivot.add(roll);
+        var up2 = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.043, 0.039, upperLen - 0.08, 14), armSkin)); at(up2, 0, -upperLen / 2 - 0.04, 0); pivot.add(up2);
+      } else { var upper = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.045, upperLen, 14), sleeveMat)); at(upper, 0, -upperLen / 2, 0); pivot.add(upper); }
       var elbow = new THREE.Group(); elbow.position.y = -upperLen; pivot.add(elbow);
-      elbow.add(sh(ball(0.047, sleeveMat, 10, 8)));
-      var fore = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.036, foreLen, 14), sleeveMat)); at(fore, 0, -foreLen / 2, 0); elbow.add(fore);
-      var cuff = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.03, 12), cfg.jacket ? shirt : sleeveMat)); at(cuff, 0, -foreLen + 0.006, 0); elbow.add(cuff);
-      var cuffButton = sh(ball(0.005, cfg.jacket ? outer : shirt, 8, 6)); at(cuffButton, s * 0.036, -foreLen + 0.006, 0.015); elbow.add(cuffButton);
+      elbow.add(sh(ball(shortSl ? 0.039 : 0.047, shortSl ? skin : sleeveMat, 10, 8)));
+      var fore = sh(new THREE.Mesh(shortSl ? new THREE.CylinderGeometry(0.038, 0.029, foreLen, 14) : new THREE.CylinderGeometry(0.045, 0.036, foreLen, 14), shortSl ? armSkin : sleeveMat)); at(fore, 0, -foreLen / 2, 0); elbow.add(fore);
+      if (!shortSl) {
+        var cuff = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.03, 12), cfg.jacket ? shirt : sleeveMat)); at(cuff, 0, -foreLen + 0.006, 0); elbow.add(cuff);
+        var cuffButton = sh(ball(0.005, cfg.jacket ? outer : shirt, 8, 6)); at(cuffButton, s * 0.036, -foreLen + 0.006, 0.015); elbow.add(cuffButton);
+      }
       var wrist = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.03, 10), skin)); at(wrist, 0, -foreLen - 0.014, 0); elbow.add(wrist);
+      if (cfg.watch && s === -(cfg.tattooSide || 1)) {   // Armbanduhr am anderen Arm
+        var wb = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.034, 0.018, 14), std(cfg.watch, 0.6))); at(wb, 0, -foreLen + 0.012, 0); elbow.add(wb);
+        var wf = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.008, 14), std(0xd9d4c8, 0.25, 0.6))); wf.rotation.z = Math.PI / 2; at(wf, s * 0.036, -foreLen + 0.012, 0); elbow.add(wf);
+      }
+      if (cfg.bracelet && s === (cfg.tattooSide || 1)) { var bl = sh(new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.004, 6, 16), std(cfg.bracelet, 0.3, 0.7))); bl.rotation.x = Math.PI / 2; at(bl, 0, -foreLen + 0.008, 0); elbow.add(bl); }
       var hand = new THREE.Group(); hand.position.y = -foreLen - 0.03; elbow.add(hand);
       hand.add(sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.036, 12, 10), skin), 0.85, 1.05, 0.55)));   // Handfläche
       for (var fi = 0; fi < 4; fi++) { var fg = sh(new THREE.Mesh(new THREE.CapsuleGeometry(0.007, 0.032 - Math.abs(fi - 1.4) * 0.006, 3, 6), skin)); at(fg, (fi - 1.5) * 0.015, -0.045, 0.006); fg.rotation.x = 0.27 + Math.abs(fi - 1.4) * 0.08; hand.add(fg); }
@@ -211,15 +292,27 @@
     var thighLen = 0.43, shinLen = 0.42;
     var legs = [-1, 1].map(function (s) {
       var hip = new THREE.Group(); hip.position.set(s * 0.085, HIP - 0.01, 0); body.add(hip);
-      var thighTop = cfg.skirt ? skin : pants;
-      var thigh = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.083, 0.062, thighLen, 16), thighTop)); at(thigh, 0, -thighLen / 2, 0); hip.add(thigh);
+      var bare = cfg.skirt || cfg.shorts, thighTop = bare ? skin : pants;
+      var thigh = sh(new THREE.Mesh(cfg.shorts ? new THREE.CylinderGeometry(0.078, 0.056, thighLen, 16) : new THREE.CylinderGeometry(0.083, 0.062, thighLen, 16), thighTop)); at(thigh, 0, -thighLen / 2, 0); hip.add(thigh);
+      if (cfg.shorts) {   // kurze Hose: Hosenbein bis zur Mitte des Oberschenkels
+        var leg = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.087, 0.17, 16), pants)); at(leg, s * 0.004, -0.07, 0); hip.add(leg);
+        var legHem = sh(new THREE.Mesh(new THREE.TorusGeometry(0.086, 0.006, 6, 18), pants)); legHem.rotation.x = Math.PI / 2; at(legHem, s * 0.004, -0.155, 0); hip.add(legHem);
+      }
       var knee = new THREE.Group(); knee.position.y = -thighLen; hip.add(knee);
-      knee.add(sh(ball(0.06, thighTop, 10, 8)));
-      var shin = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.045, shinLen, 14), cfg.skirt ? skin : pants)); at(shin, 0, -shinLen / 2, 0); knee.add(shin);
-      if (!cfg.skirt) { var hem = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.049, 0.03, 12), pants)); at(hem, 0, -shinLen + 0.03, 0); knee.add(hem); }
+      knee.add(sh(ball(cfg.shorts ? 0.054 : 0.06, thighTop, 10, 8)));
+      var shin = sh(new THREE.Mesh(bare ? new THREE.CylinderGeometry(0.055, 0.036, shinLen, 14) : new THREE.CylinderGeometry(0.06, 0.045, shinLen, 14), bare ? skin : pants)); at(shin, 0, -shinLen / 2, 0); knee.add(shin);
+      if (bare && !cfg.skirt) { var calf = sh(sc(ball(0.05, skin, 12, 10), 1, 1.8, 1)); at(calf, 0, -0.13, -0.012); knee.add(calf); }
+      if (!bare) { var hem = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.049, 0.03, 12), pants)); at(hem, 0, -shinLen + 0.03, 0); knee.add(hem); }
+      if (cfg.socks) { var sock = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.039, 0.075, 12), std(cfg.socks, 0.95))); at(sock, 0, -shinLen + 0.06, 0); knee.add(sock); }
       var foot = new THREE.Group(); foot.position.set(0, -shinLen - 0.005, 0.0); knee.add(foot);
       var shoe = sh(sc(new THREE.Mesh(new THREE.SphereGeometry(0.06, 14, 10), shoes), 0.95, 0.62, 2.0)); at(shoe, 0, -0.01, 0.055); foot.add(shoe);
-      var sole = sh(sc(ball(0.06, std(0x202126, 0.9), 16, 8), 0.79, 0.16, 1.94)); at(sole, 0, -0.042, 0.048); foot.add(sole);
+      var soleCol = cfg.sole || 0x202126;
+      var sole = sh(sc(ball(0.06, std(soleCol, 0.9), 16, 8), 0.79, 0.16, 1.94)); at(sole, 0, -0.042, 0.048); foot.add(sole);
+      if (cfg.shoeStyle === 'hightop') {   // Chucks: Schaft über den Knöchel, helle Gummikappe
+        var shaft = sh(new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 0.07, 14), shoes)); at(shaft, 0, 0.02, 0.0); foot.add(shaft);
+        var toe = sh(sc(ball(0.034, std(soleCol, 0.8), 12, 8), 1.4, 0.7, 1.1)); at(toe, 0, -0.018, 0.14); foot.add(toe);
+        var rubber = sh(sc(ball(0.06, std(soleCol, 0.8), 16, 8), 0.98, 0.3, 2.02)); at(rubber, 0, -0.03, 0.052); foot.add(rubber);
+      }
       var tongue = sh(sc(ball(0.028, shoes, 10, 8), 1, 0.35, 1.3)); at(tongue, 0, 0.018, 0.055); foot.add(tongue);
       var laceMat = std(cfg.jacket ? 0x35302c : 0xded8c9, 0.85);
       for (var li = 0; li < 3; li++) {

@@ -17,6 +17,10 @@
   };
 
   function hairBack(c) {
+    var sb = 'stroke="' + INK + '" stroke-width="2.5" stroke-linejoin="round"';
+    if (c.hairStyle === 'curly') { var o = ''; [[34, 62], [30, 76], [34, 90], [86, 62], [90, 76], [86, 90], [40, 36], [80, 36], [60, 26]].forEach(function (p) { o += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="11" fill="' + c.hair + '" ' + sb + '/>'; }); return o; }
+    if (c.hairStyle === 'afro') return '<circle cx="60" cy="42" r="38" fill="' + c.hair + '" ' + sb + '/>';
+    if (c.hairStyle === 'long') return '<path d="M32 60 Q28 26 60 22 Q92 26 88 60 L90 110 Q80 112 78 100 L42 100 Q40 112 30 110 Z" fill="' + c.hair + '" ' + sb + '/>';
     if (c.hairStyle === 'bob') return '<path d="M32 60 Q28 28 60 24 Q92 28 88 60 L88 84 Q78 80 78 66 L42 66 Q42 80 32 84 Z" fill="' + c.hair + '" stroke="' + INK + '" stroke-width="2.5" stroke-linejoin="round"/>';
     return '';
   }
@@ -28,6 +32,10 @@
       case 'bun':   return '<circle cx="60" cy="18" r="9" fill="' + c.hair + '" ' + s + '/><path d="M33 50 Q30 22 60 22 Q90 22 87 50 Q76 34 60 34 Q44 34 33 50 Z" fill="' + c.hair + '" ' + s + '/>';
       case 'slick': return '<path d="M33 48 Q32 22 62 22 Q90 24 87 48 Q84 34 70 32 Q50 30 33 48 Z" fill="' + c.hair + '" ' + s + '/>';
       case 'beanie':return '<path d="M32 46 Q30 16 60 16 Q90 16 88 46 Z" fill="' + c.beanie + '" ' + s + '/><rect x="31" y="40" width="58" height="9" rx="4" fill="' + c.beanie + '" ' + s + '/><circle cx="60" cy="14" r="4" fill="#fffdf7" ' + s + '/>';
+      case 'curly': return '<path d="M33 50 Q30 22 60 22 Q90 22 87 50 Q80 36 62 34 L60 30 L58 34 Q40 36 33 50 Z" fill="' + c.hair + '" ' + s + '/><circle cx="36" cy="44" r="7" fill="' + c.hair + '" ' + s + '/><circle cx="84" cy="44" r="7" fill="' + c.hair + '" ' + s + '/>';
+      case 'afro':  return '<path d="M34 46 Q36 30 60 30 Q84 30 86 46 Q76 38 60 38 Q44 38 34 46 Z" fill="' + c.hair + '" ' + s + '/>';
+      case 'long':  return '<path d="M33 50 Q30 22 60 22 Q90 22 87 50 Q74 34 52 36 Q40 40 33 50 Z" fill="' + c.hair + '" ' + s + '/>';
+      case 'buzz':  return '<path d="M35 44 Q34 26 60 26 Q86 26 85 44 Q76 34 60 34 Q44 34 35 44 Z" fill="' + c.hair + '" ' + s + '/>';
       case 'bob':   return '<path d="M33 50 Q30 22 60 22 Q90 22 87 50 Q78 34 60 34 Q46 34 33 50 Z" fill="' + c.hair + '" ' + s + '/>';
     }
     return '';
