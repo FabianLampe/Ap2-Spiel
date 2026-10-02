@@ -23,7 +23,11 @@
     uml_klasse: { name: 'UML-Klassendiagramm', skill: 'uml.klasse' }, uml_aktivitaet: { name: 'UML-Aktivitätsdiagramm', skill: 'uml.aktivitaet' },
     uml_zustand: { name: 'UML-Zustandsdiagramm', skill: 'uml.zustand' }, uml_sequenz: { name: 'UML-Sequenzdiagramm', skill: 'uml.sequenz' },
     uml_anwendungsfall: { name: 'UML-Anwendungsfalldiagramm', skill: 'uml.anwendungsfall' }, er_chen: { name: 'ER-Modell', skill: 'modell.er' },
-    relationenmodell: { name: 'Relationenmodell', skill: 'modell.relationen' }, epk: { name: 'EPK', skill: 'modell.epk' }
+    relationenmodell: { name: 'Relationenmodell', skill: 'modell.relationen' }, epk: { name: 'EPK', skill: 'modell.epk' },
+    netzplan: { name: 'Netzplan', skill: 'pm.netzplan' }, netzplan_kritischer_pfad: { name: 'Kritischer Pfad', skill: 'pm.netzplan' },
+    struktogramm_ausfuellen: { name: 'Struktogramm', skill: 'prog.struktogramm' }, ishikawa: { name: 'Ishikawa-Diagramm', skill: 'qm.ishikawa' },
+    geraete_und_verbindungen: { name: 'Geräte verkabeln', skill: 'it.schnittstellen' }, kurve_mit_eintrag: { name: 'Diagramm-Eintrag', skill: 'stat.diagramme' },
+    lineare_regression: { name: 'Lineare Regression', skill: 'stat.diagramme' }
   };
   var SKILLS = [
     { id: 'uml.anwendungsfall', name: 'UML: Anwendungsfalldiagramm', cost: 0, starter: true, group: 'Modellierung', topic: 'uml', desc: 'Akteure, Anwendungsfälle, include und extend.' },
@@ -33,7 +37,12 @@
     { id: 'uml.sequenz', name: 'UML: Sequenzdiagramm', cost: 200, requires: ['uml.klasse'], group: 'Modellierung', topic: 'uml', desc: 'Lebenslinien, Aufrufe, Antworten und ihre Reihenfolge.' },
     { id: 'modell.er', name: 'ER-Modell', cost: 0, starter: true, group: 'Modellierung', topic: 'datenbank', desc: 'Entitäten, Attribute, Beziehungen und Kardinalitäten.' },
     { id: 'modell.relationen', name: 'Relationenmodell und Normalisierung', cost: 180, group: 'Modellierung', topic: 'datenbank', desc: 'Tabellen in 3NF mit Primär- und Fremdschlüsseln.' },
-    { id: 'modell.epk', name: 'EPK (Geschäftsprozesse)', cost: 120, group: 'Modellierung', topic: 'wirtschaft', desc: 'Ereignisse, Funktionen, Konnektoren und Informationsobjekte.' }
+    { id: 'modell.epk', name: 'EPK (Geschäftsprozesse)', cost: 120, group: 'Modellierung', topic: 'wirtschaft', desc: 'Ereignisse, Funktionen, Konnektoren und Informationsobjekte.' },
+    { id: 'pm.netzplan', name: 'Netzplantechnik', cost: 140, group: 'Projektmanagement', topic: 'wirtschaft', desc: 'Vorwärts- und Rückwärtsrechnung, Puffer und kritischer Pfad.' },
+    { id: 'prog.struktogramm', name: 'Struktogramme', cost: 0, starter: true, group: 'Programmierung', topic: 'programmierung', desc: 'Anweisungen, Schleifen und Verzweigungen nach Nassi-Shneiderman.' },
+    { id: 'qm.ishikawa', name: 'Ishikawa-Diagramm', cost: 80, group: 'Qualitätsmanagement', topic: 'wirtschaft', desc: 'Ursachen nach dem 5M/6M-Schema einordnen.' },
+    { id: 'it.schnittstellen', name: 'Hardware-Schnittstellen', cost: 80, group: 'IT-Systeme', topic: 'it', desc: 'DisplayPort, Thunderbolt, Daisy-Chain und passende Anschlüsse.' },
+    { id: 'stat.diagramme', name: 'Diagramme und Regression', cost: 100, group: 'Statistik', topic: 'ml', desc: 'Werte in Diagramme eintragen, Regressionsgerade bestimmen.' }
   ];
 
   // ================= Bausteine (Beschriftungen) =================
@@ -66,13 +75,19 @@
       spalte: [].concat.apply([], (m.tabellen || []).map(function (t) { return (t.spalten || []).map(function (s) { return s.name; }); })) }; },
     epk: function (m) {
       var by = function (t) { return (m.knoten || []).filter(function (k) { return k.typ === t; }).map(function (k) { return k.bezeichnung; }); };
-      return { ereignis: by('ereignis'), funktion: by('funktion'), objekt: by('objekt') }; }
+      return { ereignis: by('ereignis'), funktion: by('funktion'), objekt: by('objekt') }; },
+    // Ishikawa: alle Ursachen der Musterlösung (die vorgegebenen werden im Editor herausgefiltert)
+    ishikawa: function (m) { return { ursache: [].concat.apply([], (m.aeste || []).map(function (a) { return (a.ursachen || []).map(function (u) { return u.text; }); })) }; }
   };
   var poolCache = {};
   function pools(t) {
     if (poolCache[t.id]) return poolCache[t.id];
-    var modus = t.payload.modus, own = FIELDS[modus](t.payload.loesung), rnd = seeded(t.id), out = {};
-    var others = ((window.GAME_DATA && GAME_DATA.diagrammTasks) || []).filter(function (o) { return o.payload.modus === modus && o.id !== t.id; });
+    var modus = t.payload.modus, own = FIELDS[modus] ? FIELDS[modus](t.payload.loesung) : {}, rnd = seeded(t.id), out = {};
+    if (modus === 'ishikawa') {   // nur Ursachen der offenen Zweige, Ablenker aus anderen Zweigen der Lösung und anderen Aufgaben
+      var given = [].concat.apply([], ((t.payload.start || {}).aeste || []).map(function (a) { return (a.ursachen || []).map(function (u) { return u.text; }); }));
+      own.ursache = own.ursache.filter(function (x) { return given.indexOf(x) < 0; });
+    }
+    var others = ((window.GAME_DATA && GAME_DATA.diagrammTasks) || []).filter(function (o) { return o.payload.modus === modus && o.id !== t.id && FIELDS[modus]; });
     Object.keys(own).forEach(function (f) {
       var mine = uniq(own[f]), extra = uniq([].concat.apply([], others.map(function (o) { return FIELDS[modus](o.payload.loesung)[f] || []; }))).filter(function (x) { return mine.indexOf(x) < 0; });
       var n = Math.min(extra.length, Math.max(2, Math.round(mine.length / 3)));
@@ -90,13 +105,33 @@
     ({ uml_klasse: function () { m.klassen = []; m.beziehungen = []; }, uml_aktivitaet: function () { m.knoten = []; m.kanten = []; m.swimlanes = clone(sol.swimlanes || []); },
       uml_zustand: function () { m.zustaende = []; m.uebergaenge = []; }, uml_sequenz: function () { m.lifelines = []; m.nachrichten = []; },
       uml_anwendungsfall: function () { m.akteure = []; m.anwendungsfaelle = []; m.beziehungen = []; }, er_chen: function () { m.entitaeten = []; m.beziehungen = []; },
-      relationenmodell: function () { m.tabellen = []; }, epk: function () { m.knoten = []; m.kanten = []; } })[modus]();
+      relationenmodell: function () { m.tabellen = []; }, epk: function () { m.knoten = []; m.kanten = []; },
+      netzplan: function () { m.aktivitaeten = clone(sol.aktivitaeten || []); m.knotenwerte = []; },
+      netzplan_kritischer_pfad: function () { m.aktivitaeten = clone(sol.aktivitaeten || []); m.knotenwerte = clone(sol.knotenwerte || []); m.kritischer_pfad = []; },
+      struktogramm_ausfuellen: function () { m.bausteine = clone(sol.bausteine || []); m.struktur = strip(clone(sol.struktur || [])); },
+      ishikawa: function () { m.aeste = []; m.wirkung = sol.wirkung; },
+      geraete_und_verbindungen: function () { m.knoten = clone(sol.knoten || []); m.kanten = []; },
+      kurve_mit_eintrag: function () { m.achsen = clone(sol.achsen); m.kurve = clone(sol.kurve || []); m.einzutragen = ['', '']; },
+      lineare_regression: function () { m.achsen = clone(sol.achsen); m.punkte = []; m.gerade = { beta0: '', beta1: '' }; } })[modus]();
     return m;
+  }
+  function strip(list) { (list || []).forEach(function (s) { delete s.baustein; strip(s.rumpf); }); return list; }
+  function flat(list, depth, out) { out = out || []; (list || []).forEach(function (s) { out.push({ s: s, d: depth || 0 }); flat(s.rumpf, (depth || 0) + 1, out); }); return out; }
+  // Daisy-Chain: geeignete Schnittstelle = Anschlussart, die das Zielgerät doppelt hat (Ein- und Ausgang)
+  function chainPort(m, id) {
+    var k = (m.knoten || []).filter(function (x) { return x.id === id; })[0], c = {};
+    ((k && k.ports) || []).forEach(function (p) { c[p.typ] = (c[p.typ] || 0) + 1; });
+    return Object.keys(c).filter(function (p) { return c[p] >= 2; })[0] || '';
   }
   function startModel(t) {
     var p = t.payload, m = p.start ? clone(p.start) : emptyModel(p.modus, p.loesung);
     if (p.modus === 'uml_aktivitaet' && (!m.swimlanes || !m.swimlanes.length)) m.swimlanes = clone(p.loesung.swimlanes || []);
     if (p.modus === 'uml_klasse') (m.klassen || []).forEach(function (k) { if (k.kopf_verdeckt) { k.name = ''; delete k.kopf_verdeckt; } });
+    if (p.modus === 'struktogramm_ausfuellen') { m.bausteine = clone(p.loesung.bausteine); m.struktur = strip(m.struktur || clone(p.loesung.struktur)); }
+    if (p.modus === 'ishikawa') (m.aeste || []).forEach(function (a) { a.gewaehlt = a.gewaehlt || []; });
+    if (p.modus === 'geraete_und_verbindungen') (m.kanten || []).forEach(function (e) { if (!e.port) e.port = chainPort(p.loesung, e.nach); });
+    if (p.modus === 'kurve_mit_eintrag') m.einzutragen = m.einzutragen || ['', ''];
+    if (p.modus === 'lineare_regression') { m.gerade = m.gerade || { beta0: '', beta1: '' }; m.punkte = (m.punkte || []).map(function (q) { return q.slice(); }); m.fest = (p.start && p.start.punkte || []).length; }
     var fill = emptyModel(p.modus, p.loesung); Object.keys(fill).forEach(function (k) { if (m[k] === undefined) m[k] = fill[k]; });
     return m;
   }
@@ -245,6 +280,59 @@
       return { total: total, wrong: wrong, hints: hints };
     }
   };
+  function num(v) { if (v === '' || v === null || v === undefined) return NaN; return parseFloat(String(v).replace(/\./g, function (m, i, all) { return /,/.test(all) ? '' : m; }).replace(',', '.')); }
+  var FIELDS6 = ['faz', 'fez', 'saz', 'sez', 'gp', 'fp'];
+  GRADE.netzplan = function (s, p) {
+    var pk = {}, total = 0, wrong = 0, bad = []; (p.knotenwerte || []).forEach(function (k) { pk[k.id] = k; });
+    (s.knotenwerte || []).forEach(function (k) {
+      var q = pk[k.id] || {}, w = 0; FIELDS6.forEach(function (f) { total++; if (num(q[f]) !== k[f]) w++; });
+      if (w) { wrong += w; bad.push(k.id + ' (' + w + ')'); }
+    });
+    return { total: total, wrong: wrong, hints: bad.length ? ['Noch falsch oder leer: Vorgang ' + bad.join(', ') + '. Tipp: erst vorwärts (FAZ, FEZ), dann rückwärts (SEZ, SAZ), dann die Puffer.'] : [] };
+  };
+  GRADE.netzplan_kritischer_pfad = function (s, p) {
+    var d = setDiff((s.kritischer_pfad || []).slice().sort(), (p.kritischer_pfad || []).slice().sort());
+    return { total: (s.kritischer_pfad || []).length, wrong: Math.max(d.missing.length, d.extra.length), hints: d.missing.length || d.extra.length ? ['Der kritische Pfad besteht aus allen Vorgängen ohne Gesamtpuffer (GP = 0) vom Start bis zum Ende.'] : [] };
+  };
+  GRADE.struktogramm_ausfuellen = function (s, p) {
+    var pp = {}, wrong = 0, total = 0; flat(p.struktur).forEach(function (x) { pp[x.s.position] = x.s.baustein; });
+    flat(s.struktur).forEach(function (x) { total++; if (pp[x.s.position] !== x.s.baustein) wrong++; });
+    return { total: total, wrong: wrong, hints: wrong ? [wrong + ' Feld(er) stehen noch nicht richtig. Achte darauf, was vor der Schleife, im Rumpf und danach passieren muss.'] : [] };
+  };
+  GRADE.ishikawa = function (s, p, t) {
+    var start = (t && t.payload.start) || { aeste: [] }, given = {}, total = 0, wrong = 0, hints = [];
+    (start.aeste || []).forEach(function (a) { given[a.id] = (a.ursachen || []).map(function (u) { return norm(u.text); }); });
+    var pa = {}; (p.aeste || []).forEach(function (a) { pa[a.id] = a; });
+    (s.aeste || []).forEach(function (a) {
+      var need = (a.ursachen || []).map(function (u) { return norm(u.text); }).filter(function (x) { return (given[a.id] || []).indexOf(x) < 0; });
+      if (!need.length) return;
+      var d = setDiff(need, ((pa[a.id] || {}).gewaehlt || []).filter(Boolean).map(norm));
+      total += need.length; var w = Math.max(d.missing.length, d.extra.length); wrong += w;
+      if (w) hints.push('Im Zweig „' + a.bezeichnung + '“ passen ' + w + ' Ursache(n) noch nicht.');
+    });
+    return { total: total, wrong: wrong, hints: hints };
+  };
+  GRADE.geraete_und_verbindungen = function (s, p) {
+    var key = function (e) { return [e.von, e.nach].sort().join('-'); };
+    var sk = (s.kanten || []).map(function (e) { return key(e) + '@' + chainPort(s, e.nach); });
+    var pk = (p.kanten || []).filter(function (e) { return e.von && e.nach; }).map(function (e) { var tgt = (s.kanten || []).filter(function (f) { return key(f) === key(e); })[0]; return key(e) + '@' + (e.port || ''); });
+    var d = setDiff(sk, pk), hints = [];
+    if (d.missing.length || d.extra.length) hints.push('Die Kette ist noch nicht vollständig oder nutzt eine ungeeignete Schnittstelle. Hintereinander schalten geht nur über Anschlüsse, die am Gerät als Ein- und Ausgang vorhanden sind.');
+    return { total: sk.length, wrong: Math.max(d.missing.length, d.extra.length), hints: hints };
+  };
+  GRADE.kurve_mit_eintrag = function (s, p) {
+    var e = s.einzutragen || [], q = p.einzutragen || [], tol = (s.achsen.y_schritt || 1) * 0.15;
+    var ok = num(q[0]) === e[0] && Math.abs(num(q[1]) - e[1]) <= tol;
+    return { total: 1, wrong: ok ? 0 : 1, hints: ok ? [] : ['Prüfe Jahr und Wert des Eintrags (Einheit beachten: Euro, nicht Tausend).'] };
+  };
+  GRADE.lineare_regression = function (s, p) {
+    var key = function (q) { return (Math.round(num(q[0]) * 100) / 100) + '|' + (Math.round(num(q[1]) * 100) / 100); };
+    var d = setDiff((s.punkte || []).map(key), (p.punkte || []).filter(function (q) { return q[0] !== '' && q[1] !== ''; }).map(key)), hints = [], wrong = Math.max(d.missing.length, d.extra.length);
+    var g = p.gerade || {}, b0 = Math.abs(num(g.beta0) - s.gerade.beta0) < 0.01, b1 = Math.abs(num(g.beta1) - s.gerade.beta1) < 0.01;
+    if (wrong) hints.push('Bei den Messpunkten fehlen ' + d.missing.length + ' oder sind falsch eingetragen.');
+    if (!b0 || !b1) hints.push('Die Gerade: β₀ ist der Achsenabschnitt (Wert bei x = 0), β₁ die Steigung.');
+    return { total: (s.punkte || []).length + 2, wrong: wrong + (b0 ? 0 : 1) + (b1 ? 0 : 1), hints: hints };
+  };
   function graphGrade(s, p, conv, nodeWord, edgeWord) {
     var S = conv(s), P = conv(p), r = matchGraph(S.n, S.e, P.n, P.e), hints = [];
     if (r.missingN.length || r.extraN.length) hints.push(nodeWord + ': ' + (r.missingN.length ? r.missingN.length + ' fehlen' : '') + (r.missingN.length && r.extraN.length ? ', ' : '') + (r.extraN.length ? r.extraN.length + ' passen nicht (Text, Bahn oder Art prüfen)' : '') + '.');
@@ -391,6 +479,60 @@
         section('Verbindungen', 'Informationsobjekte verbindest du mit ihrer Funktion.', es.concat([addBtn('Verbindung', function () { m.kanten.push(['', '']); ch(true); })]))];
     }
   };
+  function numIn(value, onchange, label, cls) {
+    var i = el('input', { type: 'text', inputmode: 'decimal', class: 'dg-num-in ' + (cls || ''), value: value === undefined || value === null ? '' : String(value), 'aria-label': label, placeholder: label });
+    i.addEventListener('input', function () { onchange(i.value.trim()); }); return i;
+  }
+  EDIT.netzplan = function (m, P, ch) {
+    var kw = {}; m.knotenwerte.forEach(function (k) { kw[k.id] = k; });
+    m.aktivitaeten.forEach(function (a) { if (!kw[a.id]) { kw[a.id] = { id: a.id }; m.knotenwerte.push(kw[a.id]); } });
+    var head = el('tr', {}, ['Vorgang', 'Dauer', 'Vorgänger'].concat(FIELDS6.map(function (f) { return f.toUpperCase(); })).map(function (h) { return el('th', {}, [h]); }));
+    var rows = m.aktivitaeten.map(function (a) {
+      var k = kw[a.id];
+      return el('tr', {}, [el('td', {}, [el('b', {}, [a.id])]), el('td', {}, [String(a.dauer)]), el('td', {}, [(a.vorgaenger || []).join(', ') || '–'])].concat(FIELDS6.map(function (f) {
+        return el('td', {}, [numIn(k[f], function (v) { k[f] = v === '' ? '' : num(v); ch(); }, f.toUpperCase() + ' ' + a.id, 'xs')]);
+      })));
+    });
+    return [section('Knotenwerte', 'Vorwärtsrechnung: FAZ = größter FEZ der Vorgänger, FEZ = FAZ + Dauer. Rückwärts: SEZ = kleinster SAZ der Nachfolger, SAZ = SEZ − Dauer. GP = SAZ − FAZ, FP = kleinster FAZ der Nachfolger − FEZ.', [el('div', { class: 'dg-tabwrap' }, [el('table', { class: 'data dg-net' }, [head].concat(rows))])])];
+  };
+  EDIT.netzplan_kritischer_pfad = function (m, P, ch) {
+    return [section('Kritischer Pfad', 'Markiere alle Vorgänge, die auf dem kritischen Pfad liegen.', [row(m.aktivitaeten.map(function (a) {
+      return chk(a.id, m.kritischer_pfad.indexOf(a.id) >= 0, function (v) { m.kritischer_pfad = m.kritischer_pfad.filter(function (x) { return x !== a.id; }); if (v) m.kritischer_pfad.push(a.id); m.kritischer_pfad.sort(); ch(); });
+    }))])];
+  };
+  EDIT.struktogramm_ausfuellen = function (m, P, ch) {
+    var opts = m.bausteine.map(function (b) { return { v: b.id, t: b.text }; });
+    return [section('Felder von oben nach unten', 'Eingerückte Felder stehen im Rumpf der Schleife darüber.', flat(m.struktur).map(function (x) {
+      return el('div', { class: 'dg-row', style: 'margin-left:' + (x.d * 22) + 'px' }, [el('span', { class: 'dg-num' }, [x.s.typ === 'schleife' ? '⟲' : '▭']), sel(opts, x.s.baustein, function (v) { if (v) x.s.baustein = v; else delete x.s.baustein; ch(); }, x.s.typ === 'schleife' ? 'Schleifenkopf' : 'Anweisung')]);
+    }))];
+  };
+  EDIT.ishikawa = function (m, P, ch) {
+    var open = m.aeste.filter(function (a) { return a.offene_ursachen; });
+    return [section('Offene Zweige', 'Ordne jedem leeren Zweig passende Ursachen zu. Nicht jede angebotene Ursache gehört ins Diagramm.', open.map(function (a) {
+      while (a.gewaehlt.length < a.offene_ursachen) a.gewaehlt.push('');
+      return el('div', { class: 'dg-card' }, [el('b', {}, [a.bezeichnung])].concat(a.gewaehlt.map(function (g, i) { return row([sel(P.ursache, g, function (v) { a.gewaehlt[i] = v; ch(); }, 'Ursache ' + (i + 1))]); })));
+    }))];
+  };
+  EDIT.geraete_und_verbindungen = function (m, P, ch) {
+    var dev = m.knoten.map(function (k) { return { v: k.id, t: k.bezeichnung }; });
+    var ports = uniq([].concat.apply([], m.knoten.map(function (k) { return (k.ports || []).map(function (p) { return p.typ; }); })));
+    var es = m.kanten.map(function (e, i) { return row([sel(dev, e.von, function (v) { e.von = v; ch(); }, 'von'), el('span', {}, ['→']), sel(dev, e.nach, function (v) { e.nach = v; ch(); }, 'nach'), sel(ports.map(function (p) { return { v: p, t: p.replace('_', '-').toUpperCase() }; }), e.port, function (v) { e.port = v; ch(); }, 'Schnittstelle', 'sm'), delBtn(function () { rm(m.kanten, i); ch(true); }, 'Kabel')]); });
+    return [section('Kabel', 'Lege jede Verbindung mit der passenden Schnittstelle an.', es.concat([addBtn('Kabel', function () { m.kanten.push({ von: '', nach: '', port: '' }); ch(true); })]))];
+  };
+  EDIT.kurve_mit_eintrag = function (m, P, ch) {
+    var years = []; for (var x = m.achsen.x_min; x <= m.achsen.x_max; x += (m.achsen.x_schritt || 1)) years.push(String(x));
+    return [section('Eintrag', 'Trage den gesuchten Wert an der richtigen Stelle ein (Wert in Euro, ohne Punkte oder mit Tausenderpunkten).', [row([
+      sel(years, m.einzutragen[0] === '' ? '' : String(m.einzutragen[0]), function (v) { m.einzutragen[0] = v === '' ? '' : +v; ch(); }, 'Jahr', 'sm'),
+      numIn(m.einzutragen[1], function (v) { m.einzutragen[1] = v === '' ? '' : num(v); ch(); }, 'Wert')])]),
+      el('p', { class: 'sub' }, ['Die schriftliche Beurteilung aus der Prüfungsaufgabe wird hier nicht bewertet; die Musterlösung zeigt sie nach dem Abgeben.'])];
+  };
+  EDIT.lineare_regression = function (m, P, ch) {
+    var pts = m.punkte.map(function (q, i) { var fixed = i < (m.fest || 0);
+      return row([el('span', { class: 'dg-num' }, [String(i + 1)]), fixed ? el('span', {}, ['(' + q[0] + ' | ' + q[1] + ') vorgegeben']) : numIn(q[0], function (v) { q[0] = v === '' ? '' : num(v); ch(); }, 'x', 'xs'), fixed ? null : numIn(q[1], function (v) { q[1] = v === '' ? '' : num(v); ch(); }, 'y', 'xs'), fixed ? null : delBtn(function () { rm(m.punkte, i); ch(true); }, 'Punkt')]); });
+    return [section('Messpunkte', 'Übertrage die fehlenden Messpunkte aus der Aufgabe.', pts.concat([addBtn('Messpunkt', function () { m.punkte.push(['', '']); ch(true); })])),
+      section('Regressionsgerade y = β₀ + β₁ · x', null, [row([el('span', {}, ['β₀ =']), numIn(m.gerade.beta0, function (v) { m.gerade.beta0 = v === '' ? '' : num(v); ch(); }, 'β₀', 'xs'), el('span', {}, ['β₁ =']), numIn(m.gerade.beta1, function (v) { m.gerade.beta1 = v === '' ? '' : num(v); ch(); }, 'β₁', 'xs')])])];
+  };
+
   // „name(p: T, q) : R“ -> {name, parameter, rueckgabe}
   function parseSig(s) {
     var m = /^\s*([^(]*)\((.*)\)\s*(?::\s*(.+))?$/.exec(s || ''); if (!m) return { name: s, parameter: [] };
@@ -415,7 +557,7 @@
   }
 
   function evaluate(t, model) {
-    var r = GRADE[t.payload.modus](t.payload.loesung, model || {});
+    var r = GRADE[t.payload.modus](t.payload.loesung, model || {}, t);
     var pts = r.total ? Math.max(0, Math.round(t.payload.punkte * (1 - r.wrong / r.total))) : 0;
     return { ok: r.wrong === 0, wrong: r.wrong, total: r.total, punkte: pts, hints: r.hints };
   }
@@ -460,6 +602,16 @@
     },
     solutionText: function (t) { return (t.payload.erwartung || []).join('\n').slice(0, 2500); },
     // für Tests
-    _evaluate: evaluate, _start: startModel, _pools: pools
+    _evaluate: evaluate, _start: startModel, _pools: pools,
+    // Musterlösung im Antwortformat (für Tests)
+    _solutionAnswer: function (t) {
+      var m = clone(t.payload.loesung), st = t.payload.start || {};
+      if (t.payload.modus === 'geraete_und_verbindungen') m.kanten.forEach(function (e) { e.port = chainPort(t.payload.loesung, e.nach); });
+      if (t.payload.modus === 'ishikawa') {
+        var given = {}; (st.aeste || []).forEach(function (a) { given[a.id] = (a.ursachen || []).map(function (u) { return u.text; }); });
+        m.aeste.forEach(function (a) { a.gewaehlt = (a.ursachen || []).map(function (u) { return u.text; }).filter(function (x) { return (given[a.id] || []).indexOf(x) < 0; }); });
+      }
+      return m;
+    }
   });
 })();

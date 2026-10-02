@@ -4,7 +4,7 @@
   var REP = { 1: 3, 2: 5, 3: 8 };
   var TIME = { 1: 30, 2: 60, 3: 90 };
   var DLABEL = { 1: 'leicht', 2: 'mittel', 3: 'schwer' };
-  var TOPIC_LABEL = { datenbank: 'Datenbank', uml: 'UML', programmierung: 'Programmierung', ml: 'Maschinelles Lernen', git: 'Git', wirtschaft: 'Wirtschaft', rechnen: 'Rechnen', pruefung: 'Prüfung' };
+  var TOPIC_LABEL = { datenbank: 'Datenbank', uml: 'UML', programmierung: 'Programmierung', ml: 'Maschinelles Lernen', git: 'Git', wirtschaft: 'Wirtschaft', rechnen: 'Rechnen', pruefung: 'Prüfung', it: 'IT-Systeme' };
   var LIMIT = { 1: 90, 2: 150, 3: 240 };    // Frist in Spielminuten ab Annahme
   var RUN_COST = 3, MISS_COST = 10;         // Ausführen und Fehlversuch kosten Zeit
   var OFFERS_PER_DAY = 6;

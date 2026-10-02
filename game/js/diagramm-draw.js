@@ -332,7 +332,137 @@
     return svg(W, H, out);
   }
 
-  var DRAW = { uml_klasse: drawKlassen, er_chen: drawER, relationenmodell: drawRelationen, uml_aktivitaet: drawAktivitaet, uml_zustand: drawZustand, epk: drawEPK, uml_anwendungsfall: drawAnwendungsfall, uml_sequenz: drawSequenz };
+  // ---------- Netzplan (Vorgangsknoten mit FAZ/FEZ/SAZ/SEZ/GP/FP) ----------
+  function drawNetzplan(m) {
+    var akt = m.aktivitaeten || []; if (!akt.length) return emptyHint();
+    var kw = {}; (m.knotenwerte || []).forEach(function (k) { kw[k.id] = k; });
+    var crit = m.kritischer_pfad || [];
+    var nodes = akt.map(function (a) { return { id: a.id, a: a, w: 132, h: 78 }; }), edges = [];
+    akt.forEach(function (a) { (a.vorgaenger || []).forEach(function (v) { edges.push({ from: v, to: a.id }); }); });
+    // Ebenen von links nach rechts: Layout berechnen und dann x/y tauschen
+    var lay = layered(nodes, edges, null, 46), out = '';
+    nodes.forEach(function (n) { var t = n.x; n.x = n.y * 1.9; n.y = t * 0.62 + 10; });
+    var W = 0, H = 0; nodes.forEach(function (n) { W = Math.max(W, n.x + n.w + 30); H = Math.max(H, n.y + n.h + 30); });
+    var by = {}; nodes.forEach(function (n) { by[n.id] = n; });
+    edges.forEach(function (e) {
+      var a = by[e.from], b = by[e.to]; if (!a || !b) return;
+      var c = crit.indexOf(e.from) >= 0 && crit.indexOf(e.to) >= 0;
+      out += '<line x1="' + (a.x + a.w) + '" y1="' + (a.y + a.h / 2) + '" x2="' + b.x + '" y2="' + (b.y + b.h / 2) + '" stroke="' + (c ? '#c0392b' : INK) + '" stroke-width="' + (c ? 3 : 1.4) + '" marker-end="url(#dg-arr)"/>';
+    });
+    function v(k, f) { return k && k[f] !== undefined && k[f] !== null && k[f] !== '' ? String(k[f]) : ''; }
+    nodes.forEach(function (n) {
+      var k = kw[n.id], x = n.x, y = n.y, c = crit.indexOf(n.id) >= 0, cw = n.w / 2;
+      out += '<rect x="' + x + '" y="' + y + '" width="' + n.w + '" height="' + n.h + '" fill="' + (c ? '#fde4dc' : FILL) + '" stroke="' + (c ? '#c0392b' : INK) + '" stroke-width="' + (c ? 2.6 : 1.5) + '"/>';
+      [26, 52].forEach(function (yy) { out += line({ x: x, y: y + yy }, { x: x + n.w, y: y + yy }); });
+      out += line({ x: x + cw, y: y }, { x: x + cw, y: y + n.h });
+      out += text(x + 6, y + 17, 'FAZ ' + v(k, 'faz'), { size: 11 }) + text(x + cw + 6, y + 17, 'FEZ ' + v(k, 'fez'), { size: 11 });
+      out += text(x + 6, y + 43, n.id + '  (' + n.a.dauer + ')', { size: 12, weight: 700 }) + text(x + cw + 6, y + 43, 'GP ' + v(k, 'gp') + ' FP ' + v(k, 'fp'), { size: 11 });
+      out += text(x + 6, y + 69, 'SAZ ' + v(k, 'saz'), { size: 11 }) + text(x + cw + 6, y + 69, 'SEZ ' + v(k, 'sez'), { size: 11 });
+    });
+    return svg(W, H, out);
+  }
+
+  // ---------- Struktogramm (Nassi-Shneiderman) ----------
+  function drawStruktogramm(m) {
+    var bs = {}; (m.bausteine || []).forEach(function (b) { bs[b.id] = b.text; });
+    var W = 520, out = '', y = 10;
+    function block(list, x, w) {
+      list.forEach(function (s) {
+        var t = s.baustein ? bs[s.baustein] : '';
+        if (s.typ === 'schleife') {
+          var y0 = y; out += text(x + 8, y + 18, t || '[ ' + s.position + ' ]', { weight: 700, fill: t ? INK : MUTED }); y += 26;
+          block(s.rumpf || [], x + 28, w - 28);
+          out += '<path d="M' + x + ',' + y0 + ' h' + w + ' v26 h' + (-(w - 28)) + ' V' + y + ' H' + x + ' z" fill="none" stroke="' + INK + '" stroke-width="1.5"/>';
+          out += line({ x: x, y: y }, { x: x + 28, y: y });
+        } else {
+          out += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="26" fill="' + FILL + '" stroke="' + INK + '" stroke-width="1.5"/>' + text(x + 8, y + 17, t || '[ ' + s.position + ' ]', { fill: t ? INK : MUTED });
+          y += 26;
+        }
+      });
+    }
+    block(m.struktur || [], 10, W - 20);
+    return svg(W, y + 14, out);
+  }
+
+  // ---------- Ishikawa (Fischgräte, 5M/6M) ----------
+  function drawIshikawa(m) {
+    var ae = m.aeste || []; if (!ae.length) return emptyHint();
+    var top = ae.filter(function (a, i) { return i % 2 === 0; }), bot = ae.filter(function (a, i) { return i % 2 === 1; });
+    var per = Math.max(top.length, bot.length), seg = 340, W = 40 + per * seg + 230, midY = 250, out = '';
+    var lines = Math.max.apply(null, ae.map(function (a) { return (a.ursachen || []).length + (a.offene_ursachen || 0); }).concat([1]));
+    var H = midY * 2; midY = 40 + lines * 34 + 40; H = midY * 2;
+    out += line({ x: 30, y: midY }, { x: W - 200, y: midY }, { end: 'dg-arr' });
+    out += '<rect x="' + (W - 196) + '" y="' + (midY - 50) + '" width="186" height="100" rx="8" fill="#fde4dc" stroke="' + INK + '" stroke-width="1.6"/>' + wrapText(W - 103, midY, m.wirkung || 'Wirkung', 26, { size: 11, weight: 700 });
+    function branch(a, i, up) {
+      var bx = 60 + i * seg + seg * 0.75, ex = bx - 110, ey = up ? 30 : H - 30;
+      out += line({ x: ex, y: ey }, { x: bx, y: midY });
+      out += '<rect x="' + (ex - 50) + '" y="' + (up ? ey - 22 : ey - 4) + '" width="100" height="24" rx="6" fill="#d7efe4" stroke="' + INK + '"/>' + text(ex, up ? ey - 5 : ey + 13, a.bezeichnung, { anchor: 'middle', weight: 700 });
+      var items = (a.ursachen || []).map(function (u) { return u.text; }), open = a.offene_ursachen || 0;
+      for (var k = 0; k < open; k++) items.push('…');
+      items.forEach(function (t, k) {
+        var f = (k + 1) / (items.length + 1), px = ex + (bx - ex) * f, py = ey + (midY - ey) * f;
+        var tt = t.length > 30 ? t.slice(0, 29) + '…' : t;
+        out += line({ x: px - 92, y: py }, { x: px, y: py }) + text(Math.max(px - 94, tw(tt) * 0.92 + 6), py - 4, tt, { size: 10.5, anchor: 'end', fill: t === '…' ? MUTED : INK });
+      });
+    }
+    top.forEach(function (a, i) { branch(a, i, true); }); bot.forEach(function (a, i) { branch(a, i, false); });
+    return svg(W + 20, H, out);
+  }
+
+  // ---------- Geräte und Verbindungen ----------
+  function drawGeraete(m) {
+    var kn = m.knoten || []; if (!kn.length) return emptyHint();
+    var pos = {}, out = '', x = 20;
+    kn.forEach(function (k, i) { var w = Math.max(130, tw(k.bezeichnung) + 20), h = 40 + (k.ports || []).length * 15; pos[k.id] = { x: x, y: 40 + (i % 2) * 30, w: w, h: h, k: k }; x += w + 60; });
+    (m.kanten || []).forEach(function (e) {
+      var a = pos[e.von], b = pos[e.nach]; if (!a || !b) return;
+      var p = { x: a.x + a.w, y: a.y + a.h / 2 }, q = { x: b.x, y: b.y + b.h / 2 };
+      if (b.x < a.x) { p = { x: a.x, y: a.y + a.h / 2 }; q = { x: b.x + b.w, y: b.y + b.h / 2 }; }
+      out += '<path d="M' + p.x + ',' + p.y + ' C' + (p.x + 30) + ',' + (p.y + 60) + ' ' + (q.x - 30) + ',' + (q.y + 60) + ' ' + q.x + ',' + q.y + '" fill="none" stroke="#c0392b" stroke-width="2.4"/>';
+      if (e.port) out += label((p.x + q.x) / 2, Math.max(p.y, q.y) + 34, e.port);
+    });
+    Object.keys(pos).forEach(function (id) {
+      var b = pos[id];
+      out += '<rect x="' + b.x + '" y="' + b.y + '" width="' + b.w + '" height="' + b.h + '" rx="6" fill="' + FILL + '" stroke="' + INK + '" stroke-width="1.6"/>' + text(b.x + b.w / 2, b.y + 18, b.k.bezeichnung, { anchor: 'middle', weight: 700, size: 11 });
+      (b.k.ports || []).forEach(function (p, i) { out += text(b.x + 10, b.y + 36 + i * 15, '▪ ' + p.typ.replace('_', '-').toUpperCase(), { size: 10, fill: MUTED }); });
+    });
+    return svg(x, 200, out);
+  }
+
+  // ---------- Koordinatensystem (Kurve, Regression) ----------
+  function chart(ax, body) {
+    var W = 560, H = 340, L = 70, B = 40, T = 20, R = 20, out = '';
+    var sx = function (v) { return L + (v - ax.x_min) / (ax.x_max - ax.x_min) * (W - L - R); }, sy = function (v) { return H - B - (v - ax.y_min) / (ax.y_max - ax.y_min) * (H - B - T); };
+    var xs = ax.x_schritt || Math.max(1, Math.round((ax.x_max - ax.x_min) / 10)), ys = ax.y_schritt || (ax.y_max - ax.y_min) / 6;
+    for (var x = ax.x_min; x <= ax.x_max + 1e-9; x += xs) out += line({ x: sx(x), y: T }, { x: sx(x), y: H - B }, {}).replace('stroke="' + INK + '"', 'stroke="#e3e7e1"') + text(sx(x), H - B + 16, String(x), { anchor: 'middle', size: 10 });
+    for (var y = ax.y_min; y <= ax.y_max + 1e-9; y += ys) out += line({ x: L, y: sy(y) }, { x: W - R, y: sy(y) }).replace('stroke="' + INK + '"', 'stroke="#e3e7e1"') + text(L - 6, sy(y) + 4, y >= 10000 ? (y / 1000).toLocaleString('de-DE') + ' T' : String(Math.round(y * 100) / 100).replace('.', ','), { anchor: 'end', size: 10 });
+    out += line({ x: L, y: H - B }, { x: W - R, y: H - B }) + line({ x: L, y: H - B }, { x: L, y: T });
+    return svg(W, H, out + body(sx, sy));
+  }
+  function drawKurve(m) {
+    var ax = m.achsen; if (!ax) return emptyHint();
+    return chart(ax, function (sx, sy) {
+      var pts = (m.kurve || []).map(function (p) { return sx(p[0]).toFixed(1) + ',' + sy(p[1]).toFixed(1); }).join(' '), o = '<polyline points="' + pts + '" fill="none" stroke="' + ACCENT + '" stroke-width="2.4"/>';
+      (m.kurve || []).forEach(function (p) { o += '<circle cx="' + sx(p[0]) + '" cy="' + sy(p[1]) + '" r="3" fill="' + ACCENT + '"/>'; });
+      if (m.einzutragen && m.einzutragen[0] !== '' && m.einzutragen[1] !== '' && m.einzutragen[0] !== null) o += '<circle cx="' + sx(+m.einzutragen[0]) + '" cy="' + sy(+m.einzutragen[1]) + '" r="7" fill="#c0392b" stroke="#fff" stroke-width="2"/>';
+      return o;
+    });
+  }
+  function drawRegression(m) {
+    var ax = m.achsen; if (!ax) return emptyHint();
+    return chart(ax, function (sx, sy) {
+      var o = '';
+      if (m.gerade && isFinite(m.gerade.beta0) && isFinite(m.gerade.beta1) && m.gerade.beta0 !== '' && m.gerade.beta1 !== '') {
+        var b0 = +m.gerade.beta0, b1 = +m.gerade.beta1;
+        o += '<line x1="' + sx(ax.x_min) + '" y1="' + sy(b0 + b1 * ax.x_min) + '" x2="' + sx(ax.x_max) + '" y2="' + sy(b0 + b1 * ax.x_max) + '" stroke="#c0392b" stroke-width="2.2"/>';
+      }
+      (m.punkte || []).forEach(function (p) { if (p[0] === '' || p[1] === '') return; o += '<circle cx="' + sx(+p[0]) + '" cy="' + sy(+p[1]) + '" r="5" fill="' + INK + '"/>'; });
+      return o;
+    });
+  }
+
+  var DRAW = { netzplan: drawNetzplan, netzplan_kritischer_pfad: drawNetzplan, struktogramm_ausfuellen: drawStruktogramm, ishikawa: drawIshikawa, geraete_und_verbindungen: drawGeraete, kurve_mit_eintrag: drawKurve, lineare_regression: drawRegression,
+    uml_klasse: drawKlassen, er_chen: drawER, relationenmodell: drawRelationen, uml_aktivitaet: drawAktivitaet, uml_zustand: drawZustand, epk: drawEPK, uml_anwendungsfall: drawAnwendungsfall, uml_sequenz: drawSequenz };
   window.DiagrammDraw = {
     svg: function (modus, m) { try { return (DRAW[modus] || function () { return emptyHint('Diese Diagrammart wird noch nicht gezeichnet.'); })(m || {}); } catch (e) { return emptyHint('Zeichnen fehlgeschlagen: ' + e.message); } },
     sig: sig, attrStr: attrStr
