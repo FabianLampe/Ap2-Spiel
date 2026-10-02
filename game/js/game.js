@@ -207,7 +207,7 @@
     else if (done) right.appendChild(el('div', { class: 'msg ok' }, [isNpc ? 'Diese Frage ist beantwortet.' : 'Dieser Auftrag ist erledigt.']));
     var cols = [left, right];
     if (bookOpen) cols.push(el('div', { class: 'card book-card' }, [el('h2', {}, ['Referenzbuch']), Reference.render(isNpc ? { task: task, plugin: plugin, insert: ws.insert, extraTabs: [Quests.notebookTab()], extraFirst: true } : { task: task, plugin: plugin, insert: ws.insert })]));
-    wrap.appendChild(el('div', { class: 'task' + (bookOpen ? ' with-book' : '') }, cols));
+    wrap.appendChild(el('div', { class: 'task' + (bookOpen ? ' with-book' : '') + (plugin.wide ? ' wide' : '') }, cols));
     return wrap;
   }
 
@@ -348,6 +348,7 @@
       if (n && n.kind === 'lesson') { lessonCtx = n.lesson; openWindow({ name: 'lesson' }); return; }
       api3d.talk(o);
     },
+    openTask: function (id) { if (Tasks.get(id)) openWindow({ name: 'task', id: id }); },
     openJobs: function () {
       if (!Economy.canWork(State.s)) { toast('bad', State.s.loc === 'cafe' ? 'Bestell dir erst einen Kaffee an der Theke, sonst wirft dich der Kellner raus.' : 'Hier kannst du nicht arbeiten.'); return; }
       openWindow({ name: 'home' }); Tutorial.event('jobs-open');
