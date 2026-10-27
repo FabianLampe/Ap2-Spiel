@@ -1,25 +1,25 @@
-# Rack & Ruhm – AP2-Lernspiel
+# Rack & Ruhm
 
-Browser-Lernspiel zur Vorbereitung auf die **AP2** (Fachinformatiker). Du startest als Freelancer in einer schäbigen Wohnung, nimmst Jobs an, löst Aufgaben, verdienst Geld und kaufst Skills, eine bessere Wohnung und ein Auto – und bekommst dadurch schwerere Jobs.
+Browser game for preparing for the German IT apprenticeship final exam (AP2). The player works as a freelancer: take jobs, solve tasks, earn money, buy skills and upgrades, and unlock harder jobs.
 
-## Inhalte
-- **Datenbank:** ER-Modellierung, Normalisierung, SQL (Editor mit Bewertung)
-- **UML:** Use-Case-, Aktivitäts-, Klassen-, Sequenz- und Zustandsdiagramme
-- **Programmierung:** Python, Algorithmen, Git im Team
-- **Wirtschaft & Recht:** Rechen-Aufgaben (Skonto, Break-even, Amortisation, Subnetz, RAID …), Prüfungskompass mit über 1.600 Beispielaufgaben aus den Prüfungen 2021–2026
-- **Lernmechanik:** Figuren erklären Themen, du notierst Wichtiges im begrenzten Notizbuch und wirst später danach gefragt. Dazu gibt es ein Referenzbuch und ein Tutorial.
+Topics: databases (ER modelling, normalisation, SQL), UML diagrams, programming (Python, algorithms, Git), and business and law questions based on exams from 2021 to 2026.
 
-## Technik
-- Reines **HTML/CSS/JavaScript**, ohne Build-Schritt und ohne externe Dienste
-- Begehbare **3D-Welt** mit three.js (liegt offline im Repo, `game/vendor/`), Animationen in CSS/SVG
-- Aufgaben- und Lerninhalte als Daten (`game/data/`), Prüfskripte in `tools/` (Node.js)
+Part of the learning content is based on heidelab and is used with the author's permission. See [SCOPE.md](SCOPE.md) for the full scope.
 
-## Starten
-```bash
+## Run
+
+The game is plain HTML, CSS and JavaScript and needs no build step.
+
+```
 cd game
 python3 -m http.server 8000
-# dann http://localhost:8000 öffnen
 ```
 
-## Hinweis zu den Inhalten
-Ein Teil der Lerninhalte basiert auf **heidelab** und wurde mit Erlaubnis des Autors übernommen. Details zum Umfang stehen in [SCOPE.md](SCOPE.md).
+Then open http://localhost:8000.
+
+## Layout
+
+- `game/`: the game (three.js is vendored in `game/vendor/`)
+- `game/data/`: tasks and learning content
+- `tools/`: scripts that check content and locations (Node.js)
+- `daten/kompass/`: exam questions grouped by topic
